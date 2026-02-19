@@ -7,3 +7,5 @@ An Exploratory Data Analysis (EDA) project focused on the CS2 skin market and ca
 ## Project Structure
 * [Source Code](cs2_analysis.py): Main Python script for data analysis.
 * [Data Folder](data/): Directory containing market datasets.
+* 🤖 AI Forecasting
+This project uses Machine Learning (Linear Regression) to predict future market prices based on current growth trends.
