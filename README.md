@@ -4,3 +4,6 @@ An Exploratory Data Analysis (EDA) project focused on the CS2 skin market and ca
 ## Tech Stack
 * Python (Pandas, Matplotlib, Seaborn)
 * Jupyter Notebook
+## Project Structure
+* [Source Code](cs2_analysis.py): Main Python script for data analysis.
+* [Data Folder](data/): Directory containing market datasets.
