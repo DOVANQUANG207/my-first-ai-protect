@@ -1,47 +1,53 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
-def analyze_cs2_market():
-    print("Initializing CS2 Market Analysis & Visualization...")
+def analyze_and_predict():
+    print("--- STARTING AI DATA PIPELINE ---")
     
-    # 1. Xử lý đường dẫn file thông minh
+    # 1. Đường dẫn file
     current_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(current_dir, 'data', 'cs2_cases_market.csv')
     
     try:
-        # 2. Đọc dữ liệu
+        # 2. Xử lý dữ liệu với Pandas
         df = pd.read_csv(file_path)
-        
-        # 3. Tính toán ROI
         df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
         df_sorted = df.sort_values(by='roi_percent', ascending=False)
         
-        # 4. In báo cáo ra Terminal
-        print("\n--- CS2 MARKET REPORT ---")
-        print(df_sorted[['case_name', 'purchase_price', 'current_price', 'roi_percent']])
+        # 3. Machine Learning: Dự báo giá 6 tháng tới
+        print("\n[AI Insights]: Predicting future prices using Linear Regression...")
+        # Giả định thời gian từ lúc mua đến nay là 30 ngày (điểm 0 đến điểm 30)
+        X_train = np.array([[0], [30]]) 
+        future_time = np.array([[180]]) # 6 tháng sau
         
-        # 5. VẼ BIỂU ĐỒ
+        predictions = []
+        for index, row in df_sorted.iterrows():
+            y_train = np.array([row['purchase_price'], row['current_price']])
+            model = LinearRegression().fit(X_train, y_train)
+            pred = model.predict(future_time)[0]
+            predictions.append(max(0, pred)) # Đảm bảo giá không âm
+        
+        df_sorted['predicted_price_6m'] = predictions
+        print(df_sorted[['case_name', 'current_price', 'predicted_price_6m']])
+
+        # 4. Vẽ biểu đồ ROI hiện tại
         plt.figure(figsize=(10, 6))
         plt.bar(df_sorted['case_name'], df_sorted['roi_percent'], color='skyblue')
-        plt.xlabel('Case Name')
+        plt.title('CS2 Investment ROI & AI Forecast Ready')
         plt.ylabel('ROI (%)')
-        plt.title('CS2 Cases Investment Returns (ROI)')
         plt.xticks(rotation=45)
-        
-        # Lưu biểu đồ thành file ảnh
         plt.tight_layout()
-        chart_path = os.path.join(current_dir, 'cs2_roi_chart.png')
-        plt.savefig(chart_path)
-        print(f"\n=> Success: Chart saved at {chart_path}")
         
-        # Hiển thị biểu đồ
+        # Lưu và hiển thị
+        plt.savefig(os.path.join(current_dir, 'cs2_final_report.png'))
+        print(f"\n=> Report image saved as 'cs2_final_report.png'")
         plt.show()
-        
-    except FileNotFoundError:
-        print(f"Error: Not found at {file_path}. Check your 'data' folder!")
+
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
-    analyze_cs2_market()
+    analyze_and_predict()
