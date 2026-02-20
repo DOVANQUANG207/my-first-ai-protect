@@ -1,23 +1,24 @@
 # CS2 Market Analysis & AI Price Prediction 📈🤖
 
-An automated data pipeline built to analyze Counter-Strike 2 (CS2) market trends and forecast future prices using Machine Learning.
+An automated end-to-end data pipeline designed to analyze Counter-Strike 2 (CS2) market trends and forecast future asset prices using Machine Learning.
 
-## 🚀 Overview
-This project processes CS2 case market data to identify high-return investment opportunities. It features:
-- **Data Analysis:** Automated ROI (Return on Investment) calculation using Pandas.
-- **Data Visualization:** Visualized market trends with Matplotlib.
-- **Machine Learning:** Price forecasting for the next 6 months using Scikit-Learn (Linear Regression).
+## 🚀 Key Features
+- **Real-time Data Scraping:** Automatically fetches live market prices from the Steam Market API using the `Requests` library.
+- **Data Analysis:** Performs automated ROI (Return on Investment) calculations and data cleaning with `Pandas`.
+- **AI Price Forecasting:** Predicts asset values for the next 6 months using a **Linear Regression** model from `Scikit-Learn`.
+- **Data Visualization:** Generates dynamic bar charts to visualize market insights using `Matplotlib`.
 
 ## 🛠 Tech Stack
 - **Language:** Python
-- **Libraries:** Pandas, Matplotlib, Scikit-Learn, NumPy
+- **AI & Data Science:** Pandas, Scikit-Learn, NumPy, Matplotlib
+- **Web Connectivity:** Requests (Steam Market API)
 
-## 📊 Key Insights
-According to our latest analysis:
-- **Top Performer:** Fracture Case with over **400% ROI**.
-- **Trend:** AI models predict continued growth for selected cases based on current market velocity.
+## 📊 Market Insights & AI Forecast
+Based on the real-time data processed by the pipeline:
+- **Top Performer:** High-demand assets like the **Fracture Case** show significant growth potential with an ROI exceeding **400%**.
+- **AI Prediction:** The Machine Learning model identifies steady growth trends for the current portfolio based on market velocity.
 
-![Final Report](./cs2_final_report.png)
+![AI Forecast Report](./cs2_live_report.png)
 
 ## ⚙️ Setup & Installation
 1. Clone the repository:
