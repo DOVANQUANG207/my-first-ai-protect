@@ -24,6 +24,25 @@ with st.expander("👨‍💻 About the Developer & Project"):
     """)
 st.divider()
 
+# --- TỪ ĐIỂN DỮ LIỆU CHỨA NỘI DUNG HÒM ---
+case_contents = {
+    "Fracture Case": ["🔪 Shattered Web Knives (Paracord, Survival, Nomad, Skeleton)", "🔫 Desert Eagle | Printstream", "🔫 M4A4 | Tooth Fairy"],
+    "Recoil Case": ["🧤 Broken Fang Gloves", "🔫 USP-S | Printstream", "🔫 AWP | Chromatic Aberration"],
+    "Dreams & Nightmares Case": ["🔪 Gamma Knives (Butterfly, Huntsman, etc.)", "🔫 AK-47 | Nightwish", "🔫 MP9 | Starlight Protector"],
+    "Snakebite Case": ["🧤 Broken Fang Gloves", "🔫 M4A4 | In Living Color", "🔫 MP9 | Food Chain"],
+    "Kilowatt Case": ["🔪 Kukri Knife", "🔫 AK-47 | Inheritance", "🔫 AWP | Chrome Cannon"],
+    "Revolution Case": ["🧤 Clutch Gloves", "🔫 M4A4 | Temukau", "🔫 AK-47 | Head Shot"],
+    "Clutch Case": ["🧤 Clutch Gloves", "🔫 M4A4 | Neo-Noir", "🔫 MP7 | Bloodsport"],
+    "Prisma 2 Case": ["🔪 Prisma Knives", "🔫 M4A1-S | Player Two", "🔫 Glock-18 | Bullet Queen"],
+    "Danger Zone Case": ["🔪 Horizon Knives", "🔫 AK-47 | Asiimov", "🔫 AWP | Neo-Noir"],
+    "Operation Bravo Case": ["🔪 Standard Knives", "🔫 AK-47 | Fire Serpent", "🔫 Desert Eagle | Golden Koi"],
+    "Horizon Case": ["🔪 Horizon Knives", "🔫 AK-47 | Neon Rider", "🔫 Desert Eagle | Code Red"],
+    "CS20 Case": ["🔪 Classic Knife", "🔫 AWP | Wildfire", "🔫 FAMAS | Commemoration"],
+    "Glove Case": ["🧤 Original Gloves", "🔫 M4A4 | Buzz Kill", "🔫 SSG 08 | Dragonfire"],
+    "Spectrum 2 Case": ["🔪 Spectrum Knives", "🔫 AK-47 | The Empress", "🔫 P250 | See Ya Later"],
+    "Huntsman Weapon Case": ["🔪 Huntsman Knife", "🔫 AK-47 | Vulcan", "🔫 M4A4 | Desert-Strike"]
+}
+
 def get_ai_recommendation(roi):
     if roi >= 500: return "🚀 Take Profit"
     elif roi >= 100: return "🟢 Hold Position"
@@ -39,10 +58,8 @@ try:
     df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
     df['ai_advice'] = df['roi_percent'].apply(get_ai_recommendation)
 
-    # TẠO 2 TABS CHÍNH CHO TRANG WEB
     tab1, tab2 = st.tabs(["📊 Portfolio Overview", "🕯️ Technical Analysis (Deep Dive)"])
 
-    # --- TAB 1: TỔNG QUAN DANH MỤC (Giữ nguyên giao diện cũ) ---
     with tab1:
         st.sidebar.header("⚙️ Dashboard Controls")
         search_query = st.sidebar.text_input("Search items:", "")
@@ -74,26 +91,20 @@ try:
                         st.metric(label=f"Cost: ${row['purchase_price']:.2f}", value=f"${row['current_price']:.2f}", delta=f"{row['roi_percent']:.1f}%")
                         st.caption(row['ai_advice'])
 
-    # --- TAB 2: BIỂU ĐỒ NẾN CHỨNG KHOÁN (Tính năng mới) ---
     with tab2:
         st.subheader("🔍 Khám phá Chi tiết & Phân tích Kỹ thuật")
-        
-        # Chọn hòm để phân tích
         selected_case = st.selectbox("Chọn vật phẩm muốn xem chi tiết:", df['case_name'].tolist())
-        
         col_chart, col_info = st.columns([3, 1])
         
         with col_chart:
             st.caption(f"Dữ liệu thị trường 30 ngày qua cho **{selected_case}** (Dữ liệu mô phỏng AI)")
-            
-            # Khởi tạo thuật toán tạo giá ngẫu nhiên (Random Walk)
             base_price = df[df['case_name'] == selected_case]['current_price'].values[0]
             dates = [datetime.today() - timedelta(days=i) for i in range(30, 0, -1)]
             
             opens, highs, lows, closes, volumes = [], [], [], [], []
             current_sim_price = base_price
             
-            np.random.seed(len(selected_case)) # Giữ cho biểu đồ không đổi mỗi lần F5
+            np.random.seed(len(selected_case)) 
             for _ in range(30):
                 o = current_sim_price * (1 + np.random.uniform(-0.02, 0.02))
                 c = o * (1 + np.random.normal(0, 0.03))
@@ -102,13 +113,9 @@ try:
                 v = int(np.random.uniform(5000, 50000))
                 
                 opens.append(o)
-                highs.append(h)
-                lows.append(l)
-                closes.append(c)
-                volumes.append(v)
-                current_sim_price = c # Giá đóng cửa hôm nay là mở cửa hôm sau
+                highs.append(h), lows.append(l), closes.append(c), volumes.append(v)
+                current_sim_price = c 
                 
-            # Vẽ biểu đồ Nến (Candlestick)
             fig_candle = go.Figure(data=[go.Candlestick(
                 x=dates, open=opens, high=highs, low=lows, close=closes,
                 increasing_line_color='#2ecc71', decreasing_line_color='#e74c3c'
@@ -122,12 +129,12 @@ try:
             st.plotly_chart(fig_candle, use_container_width=True)
 
         with col_info:
-            st.markdown("### 🎁 Nội dung hòm")
-            st.info("Hệ thống Database đang được cập nhật. Dự kiến sẽ hiển thị:")
-            st.write("🔹 **Vũ khí Exceedingly Rare** (Găng tay / Dao)")
-            st.write("🔹 **Súng Covert** (Đỏ)")
-            st.write("🔹 **Súng Classified** (Hồng)")
-            st.write("🔹 **Súng Restricted** (Tím)")
+            st.markdown(f"### 🎁 Nội dung {selected_case}")
+            
+            # TỰ ĐỘNG HIỂN THỊ NỘI DUNG HÒM TỪ TỪ ĐIỂN
+            items = case_contents.get(selected_case, ["Đang cập nhật dữ liệu..."])
+            for item in items:
+                st.write(f"🔹 {item}")
             
             st.markdown("---")
             st.metric("Khối lượng giao dịch (24h)", f"{volumes[-1]:,} items")
