@@ -52,6 +52,9 @@ try:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     df = pd.read_csv(os.path.join(current_dir, 'data', 'cs2_cases_market.csv'))
 
+    if 'quantity' not in df.columns:
+        df['quantity'] = 100
+
     df['purchase_price'] = pd.to_numeric(df['purchase_price'], errors='coerce')
     df['current_price'] = pd.to_numeric(df['current_price'], errors='coerce')
     df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
@@ -61,6 +64,16 @@ try:
 
     with tab1:
         st.sidebar.header("⚙️ Dashboard Controls")
+        
+        st.sidebar.subheader("🎒 My Inventory (Edit Live)")
+        edited_inventory = st.sidebar.data_editor(
+            df[['case_name', 'quantity']], 
+            hide_index=True, 
+            use_container_width=True,
+            disabled=["case_name"]
+        )
+        df['quantity'] = edited_inventory['quantity']
+
         search_query = st.sidebar.text_input("Search items:", "")
         sort_option = st.sidebar.selectbox("Sort by:", ["Highest ROI", "Lowest ROI", "Highest Current Price"])
 
@@ -78,14 +91,14 @@ try:
             mime='text/csv'
         )
 
-        col1, col2, col3 = st.columns(3)
-        total_invested = filtered_df['purchase_price'].sum()
-        total_current = filtered_df['current_price'].sum()
+        total_invested = (filtered_df['purchase_price'] * filtered_df['quantity']).sum()
+        total_current = (filtered_df['current_price'] * filtered_df['quantity']).sum()
         total_roi = ((total_current - total_invested) / total_invested) * 100 if total_invested > 0 else 0
         
+        col1, col2, col3 = st.columns(3)
         col1.metric("Total Investment", f"${total_invested:,.2f}")
-        col2.metric("Current Value", f"${total_current:,.2f}")
-        col3.metric("Total Portfolio ROI", f"{total_roi:.2f}%", delta=f"{total_roi:.2f}%")
+        col2.metric("Total Net Worth", f"${total_current:,.2f}")
+        col3.metric("Net Profit / ROI", f"${(total_current - total_invested):,.2f}", delta=f"{total_roi:.2f}%")
         st.divider()
 
         cols_per_row = 4
@@ -96,7 +109,8 @@ try:
                 with cols[idx]:
                     with st.container(border=True):
                         st.markdown(f"**{row['case_name']}**")
-                        st.metric(label=f"Cost: ${row['purchase_price']:.2f}", value=f"${row['current_price']:.2f}", delta=f"{row['roi_percent']:.1f}%")
+                        st.caption(f"🎒 Holding: **{row['quantity']}** | 💰 Value: **${(row['current_price'] * row['quantity']):.2f}**")
+                        st.metric(label=f"Cost: ${row['purchase_price']:.2f} / ea", value=f"${row['current_price']:.2f} / ea", delta=f"{row['roi_percent']:.1f}%")
                         st.caption(row['ai_advice'])
 
     with tab2:
@@ -130,14 +144,14 @@ try:
             fig_candle = go.Figure(data=[go.Candlestick(
                 x=dates, open=opens, high=highs, low=lows, close=closes,
                 increasing_line_color='#2ecc71', decreasing_line_color='#e74c3c',
-                name='Giá trị (Price)'
+                name='Giá trị'
             )])
             
             closes_series = pd.Series(closes)
             sma_7 = closes_series.rolling(window=7, min_periods=1).mean()
             
             fig_candle.add_trace(go.Scatter(
-                x=dates, y=sma_7, opacity=0.8, line=dict(color='#3498db', width=2), name='Đường xu hướng (SMA 7-day)'
+                x=dates, y=sma_7, opacity=0.8, line=dict(color='#3498db', width=2), name='Đường xu hướng (SMA 7)'
             ))
             
             fig_candle.update_layout(
