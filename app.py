@@ -2,57 +2,86 @@ import streamlit as st
 import pandas as pd
 import os
 
-# 1. Cấu hình trang
-st.set_page_config(page_title="CS2 AI Market Dashboard", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 
-# 2. Sidebar
-st.sidebar.header("🔍 Hệ thống lọc")
-search_query = st.sidebar.text_input("Tìm kiếm tên hòm hoặc súng:", "")
-st.sidebar.info("Hệ thống tự động tính ROI và dự báo giá.")
+st.markdown("<h1 style='text-align: center; color: #2ecc71;'>🚀 CS2 Market Analytics & AI Forecast</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888888;'>Hệ thống theo dõi danh mục đầu tư và phân tích xu hướng giá bằng thuật toán.</p>", unsafe_allow_html=True)
+st.divider()
 
-# 3. KHO LINK ẢNH SIÊU ỔN ĐỊNH (Sửa lỗi ảnh không hiện)
-case_images = {
-    "fracture case": "https://raw.githubusercontent.com/SteamDatabase/SteamTracker/master/images/730/econ/item_images/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1x1JgZk57TqLghpxlXwIytN_tHjl9KIlfD3J6jXxTgGvcZzi-2ZqI-njgTlqUdoMmvxcoTAdFRqZltLmXjQ.png",
-    "recoil case": "https://raw.githubusercontent.com/SteamDatabase/SteamTracker/master/images/730/econ/item_images/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1xwIQbA5KicLwJzwv3dKVH_jL7Swa2nkvaYK7vSkT9UuZZzjOqYrIin2VKwr0dtNmGnIdPBewc5aV6G_ADtl-_v15i76MmfzyYyvyVw5HffyA.png",
-    "dreams & nightmares case": "https://raw.githubusercontent.com/SteamDatabase/SteamTracker/master/images/730/econ/item_images/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1xwIQbT5qirIgp1xgDIditH_tDigYmflfCIM7_UqXYDu5JxibCeqImijwTj-xY6Yjj1IYeWIQNpZF_X-AC2kOzo0MDv6p3AwXs3uSMqsyzE.png",
-    "snakebite case": "https://raw.githubusercontent.com/SteamDatabase/SteamTracker/master/images/730/econ/item_images/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1xwIQbT5qirIgp1xgDIditH_tDigYmflfCIM7_UqXYDu5JxibCeqImijwTj-xY6Yjj1IYeWIQNpZF_X-AC2kOzo0MDv6p3AwXs3uSMqsyzE.png",
-    "kilowatt case": "https://raw.githubusercontent.com/SteamDatabase/SteamTracker/master/images/730/econ/item_images/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1x1JgZk57TqLghpxlXwIytN_tHjl9KIlfD3J6jXxTgGvcZzi-2ZqI-njgTlqUdoMmvxcoTAdFRqZltLmXjQ.png",
-    "operation bravo case": "https://raw.githubusercontent.com/SteamDatabase/SteamTracker/master/images/730/econ/item_images/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1xwIQbT5qirIgp1xgDIditH_tDigYmflfCIM7_UqXYDu5JxibCeqImijwTj-xY6Yjj1IYeWIQNpZF_X-AC2kOzo0MDv6p3AwXs3uSMqsyzE.png",
-    "clutch case": "https://raw.githubusercontent.com/SteamDatabase/SteamTracker/master/images/730/econ/item_images/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1xwIQbT5qirIgp1xgDIditH_tDigYmflfCIM7_UqXYDu5JxibCeqImijwTj-xY6Yjj1IYeWIQNpZF_X-AC2kOzo0MDv6p3AwXs3uSMqsyzE.png"
-}
-default_img = "https://community.cloudflare.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fTPOo8zjVF1xwIQTG4rihLQZ0wvrAIT-1ysvngojlwLSiZe7SlDlX6ZQoieqSpYmhiQTi-1o_ZWryIYKXdQJsaAvUrwbvlLnpgpS_tcpLnXJg/360fx360f"
+def get_ai_recommendation(roi):
+    if roi >= 500:
+        return "🚀 Khuyên dùng: Chốt lời"
+    elif roi >= 100:
+        return "🟢 Khuyên dùng: Giữ vị thế"
+    elif roi >= 0:
+        return "🟡 Khuyên dùng: Theo dõi thêm"
+    else:
+        return "🔴 Khuyên dùng: Bắt đáy (HODL)"
 
-# 4. Giao diện chính
-st.image("https://shared.fastly.steamstatic.com/store_images/730/capsule_616x353.jpg", use_container_width=True)
-st.title("🚀 CS2 Market Analytics & AI Forecast")
-
-# 5. Xử lý dữ liệu
 try:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     data_path = os.path.join(current_dir, 'data', 'cs2_cases_market.csv')
     df = pd.read_csv(data_path)
-    
-    # Tính ROI
-    df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
-    
-    # Lọc theo tìm kiếm
-    filtered_df = df[df['case_name'].str.contains(search_query, case=False)]
-    st.subheader(f"📦 Danh mục hiển thị ({len(filtered_df)} sản phẩm)")
 
-    # Hiển thị dạng lưới
+    df['purchase_price'] = pd.to_numeric(df['purchase_price'], errors='coerce')
+    df['current_price'] = pd.to_numeric(df['current_price'], errors='coerce')
+    df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
+    df['ai_advice'] = df['roi_percent'].apply(get_ai_recommendation)
+
+    st.sidebar.header("⚙️ Bảng Điều Khiển")
+    search_query = st.sidebar.text_input("Tìm kiếm vật phẩm:", "")
+    sort_option = st.sidebar.selectbox("Sắp xếp theo:", ["ROI Cao nhất", "ROI Thấp nhất", "Giá hiện tại Cao nhất"])
+
+    filtered_df = df[df['case_name'].str.contains(search_query, case=False)]
+
+    if sort_option == "ROI Cao nhất":
+        filtered_df = filtered_df.sort_values(by='roi_percent', ascending=False)
+    elif sort_option == "ROI Thấp nhất":
+        filtered_df = filtered_df.sort_values(by='roi_percent', ascending=True)
+    elif sort_option == "Giá hiện tại Cao nhất":
+        filtered_df = filtered_df.sort_values(by='current_price', ascending=False)
+
+    st.subheader("💼 Tổng Quan Danh Mục Đầu Tư")
+    total_invested = filtered_df['purchase_price'].sum()
+    total_current = filtered_df['current_price'].sum()
+    
+    if total_invested > 0:
+        total_roi = ((total_current - total_invested) / total_invested) * 100
+    else:
+        total_roi = 0
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Tổng Vốn Chi Tiêu", f"${total_invested:,.2f}")
+    col2.metric("Tổng Giá Trị Ước Tính", f"${total_current:,.2f}")
+    col3.metric("Tăng Trưởng Toàn Danh Mục", f"{total_roi:.2f}%", delta=f"{total_roi:.2f}%")
+
+    st.divider()
+
+    st.subheader(f"📦 Chi Tiết Thị Trường ({len(filtered_df)} Vật phẩm)")
+    
     cols_per_row = 4
     for i in range(0, len(filtered_df), cols_per_row):
         cols = st.columns(cols_per_row)
         batch = filtered_df.iloc[i : i + cols_per_row]
+        
         for idx, (index, row) in enumerate(batch.iterrows()):
             with cols[idx]:
-                # CHỖ NÀY QUAN TRỌNG: Viết thường tên hòm để khớp với kho ảnh
-                name_key = row['case_name'].lower().strip()
-                img_url = case_images.get(name_key, default_img)
-                
-                st.image(img_url, width=150)
-                st.markdown(f"**{row['case_name']}**")
-                st.metric(f"Vốn: ${row['purchase_price']:.2f}", f"${row['current_price']:.2f}", f"{row['roi_percent']:.1f}% ROI")
+                with st.container(border=True):
+                    st.markdown(f"**{row['case_name']}**")
+                    st.metric(
+                        label=f"Giá vốn: ${row['purchase_price']:.2f}",
+                        value=f"${row['current_price']:.2f}",
+                        delta=f"{row['roi_percent']:.1f}%"
+                    )
+                    st.caption(row['ai_advice'])
 
+    st.divider()
+    
+    st.subheader("📊 Biểu đồ Phân bổ Lợi nhuận (ROI)")
+    chart_data = filtered_df[['case_name', 'roi_percent']].set_index('case_name')
+    st.bar_chart(chart_data, color="#2ecc71")
+
+except FileNotFoundError:
+    st.error("⚠️ Không tìm thấy cơ sở dữ liệu. Vui lòng kiểm tra lại file CSV.")
 except Exception as e:
-    st.error(f"Lỗi: {e}")
+    st.error(f"⚠️ Đã xảy ra lỗi hệ thống: {e}")
