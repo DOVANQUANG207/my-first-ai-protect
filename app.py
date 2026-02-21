@@ -69,6 +69,15 @@ try:
         elif sort_option == "Lowest ROI": filtered_df = filtered_df.sort_values(by='roi_percent', ascending=True)
         else: filtered_df = filtered_df.sort_values(by='current_price', ascending=False)
 
+        st.sidebar.markdown("---")
+        csv_data = filtered_df.to_csv(index=False).encode('utf-8')
+        st.sidebar.download_button(
+            label="📥 Download Report (CSV)",
+            data=csv_data,
+            file_name='cs2_ai_analytics_report.csv',
+            mime='text/csv'
+        )
+
         col1, col2, col3 = st.columns(3)
         total_invested = filtered_df['purchase_price'].sum()
         total_current = filtered_df['current_price'].sum()
@@ -120,13 +129,22 @@ try:
                 
             fig_candle = go.Figure(data=[go.Candlestick(
                 x=dates, open=opens, high=highs, low=lows, close=closes,
-                increasing_line_color='#2ecc71', decreasing_line_color='#e74c3c'
+                increasing_line_color='#2ecc71', decreasing_line_color='#e74c3c',
+                name='Giá trị (Price)'
             )])
+            
+            closes_series = pd.Series(closes)
+            sma_7 = closes_series.rolling(window=7, min_periods=1).mean()
+            
+            fig_candle.add_trace(go.Scatter(
+                x=dates, y=sma_7, opacity=0.8, line=dict(color='#3498db', width=2), name='Đường xu hướng (SMA 7-day)'
+            ))
             
             fig_candle.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#cfd8dc'), xaxis_rangeslider_visible=False,
-                margin=dict(t=10, l=10, r=10, b=10), height=400
+                margin=dict(t=10, l=10, r=10, b=10), height=400,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
             st.plotly_chart(fig_candle, use_container_width=True)
 
