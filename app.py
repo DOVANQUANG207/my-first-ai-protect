@@ -5,8 +5,26 @@ import plotly.express as px
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 
+st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
+
+st.markdown("""
+    <marquee style="width: 100%; color: #ff4b4b; font-weight: bold; font-size: 15px; padding: 8px 0; background-color: rgba(255, 75, 75, 0.1); border-radius: 5px; margin-bottom: 10px;">
+        ⚠️ DISCLAIMER: This platform provides market analytics and AI forecasts only. We DO NOT conduct any real-money transactions, trading, or gambling. Please report any impersonators!
+    </marquee>
+""", unsafe_allow_html=True)
+
 st.markdown("<h1 style='text-align: center; color: #2ecc71;'>🚀 CS2 Market Analytics & AI Forecast</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #888888;'>Portfolio tracking and algorithmic price trend analysis system.</p>", unsafe_allow_html=True)
+
+with st.expander("👨‍💻 About the Developer & Project"):
+    st.write("""
+        **🎯 Project Purpose:**
+        This dashboard is designed to analyze the Counter-Strike 2 economy using data science. It tracks historical data, calculates Return on Investment (ROI), and provides algorithmic holding recommendations to help users navigate market trends safely and effectively.
+        
+        **👋 About the Developer:**
+        Hi, I'm **Đỗ Văn Quang**! I am currently a first-year student majoring in **Computer Science**, focusing on **Artificial Intelligence & Big Data** at the **University of Information and Communication Technology**. This project serves as a practical application of my ongoing studies in data engineering and programming.
+    """)
+
 st.divider()
 
 def get_ai_recommendation(roi):
@@ -17,7 +35,7 @@ def get_ai_recommendation(roi):
     elif roi >= 0:
         return "🟡 Advice: Monitor"
     else:
-        return "🔴 Advice: Buy the Dip"
+        return "🔴 Advice: Buy the Dip (Hold)"
 
 try:
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -99,6 +117,8 @@ try:
     )
     
     st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("<hr><p style='text-align: center; color: #888888; font-size: 12px;'>© 2026 Developed by Đỗ Văn Quang. All rights reserved.</p>", unsafe_allow_html=True)
 
 except FileNotFoundError:
     st.error("⚠️ Database not found. Please check your CSV file.")
