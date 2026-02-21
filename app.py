@@ -24,7 +24,6 @@ with st.expander("👨‍💻 About the Developer & Project"):
     """)
 st.divider()
 
-# --- TỪ ĐIỂN DỮ LIỆU CHỨA NỘI DUNG HÒM ---
 case_contents = {
     "Fracture Case": ["🔪 Shattered Web Knives (Paracord, Survival, Nomad, Skeleton)", "🔫 Desert Eagle | Printstream", "🔫 M4A4 | Tooth Fairy"],
     "Recoil Case": ["🧤 Broken Fang Gloves", "🔫 USP-S | Printstream", "🔫 AWP | Chromatic Aberration"],
@@ -113,7 +112,10 @@ try:
                 v = int(np.random.uniform(5000, 50000))
                 
                 opens.append(o)
-                highs.append(h), lows.append(l), closes.append(c), volumes.append(v)
+                highs.append(h)
+                lows.append(l)
+                closes.append(c)
+                volumes.append(v)
                 current_sim_price = c 
                 
             fig_candle = go.Figure(data=[go.Candlestick(
@@ -131,7 +133,6 @@ try:
         with col_info:
             st.markdown(f"### 🎁 Nội dung {selected_case}")
             
-            # TỰ ĐỘNG HIỂN THỊ NỘI DUNG HÒM TỪ TỪ ĐIỂN
             items = case_contents.get(selected_case, ["Đang cập nhật dữ liệu..."])
             for item in items:
                 st.write(f"🔹 {item}")
