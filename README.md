@@ -47,7 +47,7 @@ I am a first-year student majoring in **Computer Science** at the University of 
 | Project | Description | Tech Stack |
 |---------|-------------|------------|
 | **[CS2 Market Analytics & AI Forecast](https://github.com/DOVANQUANG207/my-first-ai-protect)** | Developed a full-stack financial dashboard simulating CS2 item markets. Implemented a 7-day Simple Moving Average (SMA) algorithm and interactive OHLCV candlestick charts for algorithmic holding recommendations. | `Python`, `Streamlit`, `Plotly`, `Pandas` |
-| **[Project 2 Name](#)** | (Sắp tới cậu làm dự án gì thì điền vào đây) | `Công nghệ` |
+| **[Project 2 Name](#)** | (In the near future, I will do a project on the cryptocurrency market) | `Công nghệ` |
 
 ---
 
