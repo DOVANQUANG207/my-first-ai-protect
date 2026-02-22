@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 from datetime import datetime, timedelta
+from sklearn.linear_model import LinearRegression
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
@@ -60,7 +61,7 @@ try:
     df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
     df['ai_advice'] = df['roi_percent'].apply(get_ai_recommendation)
 
-    tab1, tab2 = st.tabs(["📊 Portfolio Overview", "🕯️ Technical Analysis (Deep Dive)"])
+    tab1, tab2 = st.tabs(["📊 Portfolio Overview", "🤖 AI Price Prediction (ML)"])
 
     with tab1:
         st.sidebar.header("⚙️ Dashboard Controls")
@@ -114,20 +115,20 @@ try:
                         st.caption(row['ai_advice'])
 
     with tab2:
-        st.subheader("🔍 Khám phá Chi tiết & Phân tích Kỹ thuật")
+        st.subheader("🤖 Phân tích Kỹ thuật & Dự báo Machine Learning")
         selected_case = st.selectbox("Chọn vật phẩm muốn xem chi tiết:", df['case_name'].tolist())
         col_chart, col_info = st.columns([3, 1])
         
         with col_chart:
-            st.caption(f"Dữ liệu thị trường 30 ngày qua cho **{selected_case}** (Dữ liệu mô phỏng AI)")
+            st.caption(f"Dữ liệu thị trường 30 ngày qua và Dự báo 7 ngày tới cho **{selected_case}**")
             base_price = df[df['case_name'] == selected_case]['current_price'].values[0]
-            dates = [datetime.today() - timedelta(days=i) for i in range(30, 0, -1)]
+            dates = [datetime.today() - timedelta(days=i) for i in range(30, -1, -1)]
             
             opens, highs, lows, closes, volumes = [], [], [], [], []
             current_sim_price = base_price
             
             np.random.seed(len(selected_case)) 
-            for _ in range(30):
+            for _ in range(31):
                 o = current_sim_price * (1 + np.random.uniform(-0.02, 0.02))
                 c = o * (1 + np.random.normal(0, 0.03))
                 h = max(o, c) * (1 + abs(np.random.normal(0, 0.01)))
@@ -141,17 +142,33 @@ try:
                 volumes.append(v)
                 current_sim_price = c 
                 
+            X = np.array(range(len(closes))).reshape(-1, 1)
+            y = np.array(closes)
+            model = LinearRegression()
+            model.fit(X, y)
+            
+            future_days = 7
+            future_X = np.array(range(len(closes), len(closes) + future_days)).reshape(-1, 1)
+            future_y = model.predict(future_X)
+            future_dates = [dates[-1] + timedelta(days=i) for i in range(1, future_days + 1)]
+            
+            predicted_price_7_days = future_y[-1]
+            trend_percentage = ((predicted_price_7_days - closes[-1]) / closes[-1]) * 100
+
             fig_candle = go.Figure(data=[go.Candlestick(
                 x=dates, open=opens, high=highs, low=lows, close=closes,
                 increasing_line_color='#2ecc71', decreasing_line_color='#e74c3c',
-                name='Giá trị'
+                name='Lịch sử (30 days)'
             )])
             
-            closes_series = pd.Series(closes)
-            sma_7 = closes_series.rolling(window=7, min_periods=1).mean()
+            fig_candle.add_trace(go.Scatter(
+                x=dates, y=model.predict(X), mode='lines', 
+                line=dict(color='#f1c40f', width=2), name='Đường xu hướng AI (Trendline)'
+            ))
             
             fig_candle.add_trace(go.Scatter(
-                x=dates, y=sma_7, opacity=0.8, line=dict(color='#3498db', width=2), name='Đường xu hướng (SMA 7)'
+                x=future_dates, y=future_y, mode='lines+markers', 
+                line=dict(color='#9b59b6', width=2, dash='dot'), name='Dự báo 7 ngày (AI Forecast)'
             ))
             
             fig_candle.update_layout(
@@ -163,15 +180,16 @@ try:
             st.plotly_chart(fig_candle, use_container_width=True)
 
         with col_info:
+            st.markdown(f"### 🤖 AI Forecast")
+            st.metric("Giá hiện tại", f"${closes[-1]:.2f}")
+            st.metric("Dự báo 7 ngày tới", f"${predicted_price_7_days:.2f}", f"{trend_percentage:.2f}%")
+            
+            st.markdown("---")
             st.markdown(f"### 🎁 Nội dung {selected_case}")
             
             items = case_contents.get(selected_case, ["Đang cập nhật dữ liệu..."])
             for item in items:
                 st.write(f"🔹 {item}")
-            
-            st.markdown("---")
-            st.metric("Khối lượng giao dịch (24h)", f"{volumes[-1]:,} items")
-            st.metric("Biến động tuần (7d)", f"{((closes[-1] - closes[-7]) / closes[-7] * 100):.1f}%")
 
     st.markdown("<hr><p style='text-align: center; color: #888888; font-size: 12px;'>© 2026 Developed by Đỗ Văn Quang. All rights reserved.</p>", unsafe_allow_html=True)
 
