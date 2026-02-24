@@ -26,9 +26,9 @@ with st.expander("👨‍💻 About the Developer & Project"):
 st.divider()
 
 case_contents = {
-    "Fracture Case": ["🔪 Shattered Web Knives (Paracord, Survival, Nomad, Skeleton)", "🔫 Desert Eagle | Printstream", "🔫 M4A4 | Tooth Fairy"],
+    "Fracture Case": ["🔪 Shattered Web Knives", "🔫 Desert Eagle | Printstream", "🔫 M4A4 | Tooth Fairy"],
     "Recoil Case": ["🧤 Broken Fang Gloves", "🔫 USP-S | Printstream", "🔫 AWP | Chromatic Aberration"],
-    "Dreams & Nightmares Case": ["🔪 Gamma Knives (Butterfly, Huntsman, etc.)", "🔫 AK-47 | Nightwish", "🔫 MP9 | Starlight Protector"],
+    "Dreams & Nightmares Case": ["🔪 Gamma Knives", "🔫 AK-47 | Nightwish", "🔫 MP9 | Starlight Protector"],
     "Snakebite Case": ["🧤 Broken Fang Gloves", "🔫 M4A4 | In Living Color", "🔫 MP9 | Food Chain"],
     "Kilowatt Case": ["🔪 Kukri Knife", "🔫 AK-47 | Inheritance", "🔫 AWP | Chrome Cannon"],
     "Revolution Case": ["🧤 Clutch Gloves", "🔫 M4A4 | Temukau", "🔫 AK-47 | Head Shot"],
@@ -40,7 +40,10 @@ case_contents = {
     "CS20 Case": ["🔪 Classic Knife", "🔫 AWP | Wildfire", "🔫 FAMAS | Commemoration"],
     "Glove Case": ["🧤 Original Gloves", "🔫 M4A4 | Buzz Kill", "🔫 SSG 08 | Dragonfire"],
     "Spectrum 2 Case": ["🔪 Spectrum Knives", "🔫 AK-47 | The Empress", "🔫 P250 | See Ya Later"],
-    "Huntsman Weapon Case": ["🔪 Huntsman Knife", "🔫 AK-47 | Vulcan", "🔫 M4A4 | Desert-Strike"]
+    "Huntsman Weapon Case": ["🔪 Huntsman Knife", "🔫 AK-47 | Vulcan", "🔫 M4A4 | Desert-Strike"],
+    "Paris 2023 Legends Autograph Capsule": ["🌟 ZywOo (Gold)", "🌟 s1mple (Holo)", "🌟 ropz (Foil)"],
+    "Sir Bloody Miami Darryl": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "😎 The Professionals Faction"],
+    "Number K": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "💰 The Professionals Faction"]
 }
 
 def get_ai_recommendation(roi):
