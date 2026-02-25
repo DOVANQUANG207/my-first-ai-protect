@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import numpy as np
 from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
+import requests
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
@@ -46,6 +47,18 @@ case_contents = {
     "Number K": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "💰 The Professionals Faction"]
 }
 
+@st.cache_data(ttl=3600)
+def fetch_live_prices():
+    try:
+        url = "http://csgobackpack.net/api/GetItemsList/v2/?no_details=true"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        if data.get('success'):
+            return data['items_list']
+        return None
+    except:
+        return None
+
 def get_ai_recommendation(roi):
     if roi >= 500: return "🚀 Take Profit"
     elif roi >= 100: return "🟢 Hold Position"
@@ -58,6 +71,20 @@ try:
 
     if 'quantity' not in df.columns:
         df['quantity'] = 100
+
+    live_data = fetch_live_prices()
+    
+    if live_data:
+        for index, row in df.iterrows():
+            item_name = row['case_name']
+            if item_name in live_data:
+                price_info = live_data[item_name].get('price', {})
+                avg_price = price_info.get('7_days', {}).get('average')
+                if avg_price:
+                    df.at[index, 'current_price'] = float(avg_price)
+        st.sidebar.success("🟢 API Connected: Real-time Data Synced")
+    else:
+        st.sidebar.warning("🟡 API Offline: Using Local CSV Data")
 
     df['purchase_price'] = pd.to_numeric(df['purchase_price'], errors='coerce')
     df['current_price'] = pd.to_numeric(df['current_price'], errors='coerce')
