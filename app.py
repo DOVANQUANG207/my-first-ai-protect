@@ -70,7 +70,8 @@ try:
     df = pd.read_csv(os.path.join(current_dir, 'data', 'cs2_cases_market.csv'))
 
     if 'quantity' not in df.columns:
-        df['quantity'] = 100
+        df['quantity'] = 0
+        df.loc[df['case_name'] == 'Fracture Case', 'quantity'] = 110
 
     live_data = fetch_live_prices()
     
@@ -91,7 +92,7 @@ try:
     df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
     df['ai_advice'] = df['roi_percent'].apply(get_ai_recommendation)
 
-    tab1, tab2 = st.tabs(["📊 Portfolio Overview", "🤖 AI Price Prediction (ML)"])
+    tab1, tab2, tab3 = st.tabs(["📊 Market Overview", "💼 Asset Allocation", "🤖 AI Price Prediction (ML)"])
 
     with tab1:
         st.sidebar.header("⚙️ Dashboard Controls")
@@ -145,6 +146,37 @@ try:
                         st.caption(row['ai_advice'])
 
     with tab2:
+        st.subheader("💼 Phân bổ danh mục đầu tư")
+        
+        inventory_df = df[df['quantity'] > 0].copy()
+        inventory_df['Total Value'] = inventory_df['current_price'] * inventory_df['quantity']
+        
+        steam_wallet_balance = 50.0 
+        
+        pie_data = pd.DataFrame({
+            'Item': inventory_df['case_name'].tolist() + ['Steam Wallet (Mặc định)'],
+            'Value ($)': inventory_df['Total Value'].tolist() + [steam_wallet_balance]
+        })
+        
+        col_table, col_pie = st.columns([1, 2])
+        
+        with col_table:
+            st.write("**Chi tiết tài sản:**")
+            st.dataframe(pie_data, hide_index=True, use_container_width=True)
+            st.metric("Tổng định giá", f"${pie_data['Value ($)'].sum():.2f}")
+            
+        with col_pie:
+            fig_pie = px.pie(pie_data, values='Value ($)', names='Item', hole=0.5,
+                             color_discrete_sequence=px.colors.sequential.Teal)
+            fig_pie.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)', 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                font=dict(color='#cfd8dc'),
+                margin=dict(t=10, l=10, r=10, b=10)
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+    with tab3:
         st.subheader("🤖 Phân tích Kỹ thuật & Dự báo Machine Learning")
         selected_case = st.selectbox("Chọn vật phẩm muốn xem chi tiết:", df['case_name'].tolist())
         col_chart, col_info = st.columns([3, 1])
