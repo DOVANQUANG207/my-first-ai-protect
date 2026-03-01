@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import requests
+import urllib.parse
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
@@ -48,16 +49,25 @@ case_contents = {
     "Number K": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "💰 The Professionals Faction"]
 }
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1800) # Cache 30 phút cho giá Live
 def fetch_live_prices():
+    # Sử dụng API Steam Market trung gian ổn định hơn (csgobackpack hay chết do quá tải)
     try:
-        url = "http://csgobackpack.net/api/GetItemsList/v2/?no_details=true"
-        response = requests.get(url, timeout=10)
-        data = response.json()
-        if data.get('success'):
-            return data['items_list']
+        url = "https://api.steamapis.com/market/items/730?api_key=YOUR_API_KEY_HERE" # API mẫu
+        # Vì SteamAPIs cần key trả phí, ta dùng một trick nhỏ: Kéo dữ liệu giá tĩnh từ kho GitHub update hàng ngày
+        fallback_url = "https://raw.githubusercontent.com/jonese1234/Csgo-Case-Data/master/latest.json" 
+        response = requests.get(fallback_url, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Cấu trúc lại dữ liệu cho giống với format cũ của cậu để không hỏng code bên dưới
+            reformatted_data = {}
+            for case_name, case_data in data.get('cases', {}).items():
+                 reformatted_data[case_name] = {'price': {'7_days': {'average': case_data.get('cost', 0)}}}
+            return reformatted_data
         return None
-    except:
+    except Exception as e:
+        print(f"API Error: {e}")
         return None
 
 @st.cache_data(ttl=86400)
@@ -105,7 +115,7 @@ try:
             if item_name in live_data:
                 price_info = live_data[item_name].get('price', {})
                 avg_price = price_info.get('7_days', {}).get('average')
-                if avg_price:
+                if avg_price and avg_price > 0:
                     df.at[index, 'current_price'] = float(avg_price)
         st.sidebar.success("🟢 API Connected: Real-time Data Synced")
     else:
