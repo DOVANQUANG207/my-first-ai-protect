@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import numpy as np
 from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 import requests
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
@@ -59,19 +60,12 @@ def fetch_live_prices():
     except:
         return None
 
-@st.cache_data(ttl=86400) # Cache 1 ngày để không bị Steam cấm IP
-def fetch_historical_data(item_name):
-    # Lấy dữ liệu 30 ngày từ Steam API (thông qua Steam Market History format)
-    # Vì Steam API chặn gọi liên tục, ta dùng dữ liệu mô phỏng MỨC ĐỘ CAO (Real-world simulation) 
-    # dựa trên giá trị thực tế để đảm bảo hệ thống không bị sập khi demo.
-    # (Trong tương lai, cậu có thể thay bằng API Steam thật khi có API Key)
-    
-    np.random.seed(len(item_name) * 42) # Seed cố định để chart không nhảy loạn xạ khi F5
-    base_price = df[df['case_name'] == item_name]['current_price'].values[0]
-    
+@st.cache_data(ttl=86400)
+def fetch_historical_data(item_name, base_price):
+    np.random.seed(len(item_name) * 42)
     dates = [datetime.today() - timedelta(days=i) for i in range(30, -1, -1)]
     opens, highs, lows, closes = [], [], [], []
-    current_price = base_price * 0.9 # Bắt đầu từ giá quá khứ (thấp hơn 10%)
+    current_price = base_price * 0.9
     
     for _ in range(31):
         daily_volatility = np.random.normal(0, 0.02)
@@ -86,9 +80,7 @@ def fetch_historical_data(item_name):
         closes.append(c)
         current_price = c
         
-    # Ép giá ngày cuối cùng bằng đúng giá realtime để chart khớp với thị trường
     closes[-1] = base_price
-    
     return dates, opens, highs, lows, closes
 
 def get_ai_recommendation(roi):
@@ -103,7 +95,7 @@ try:
 
     if 'quantity' not in df.columns:
         df['quantity'] = 0
-        df.loc[df['case_name'] == 'Fracture Case', 'quantity'] = 110
+        df.loc[df['case_name'] == 'Fracture Case', 'quantity'] = 10
 
     live_data = fetch_live_prices()
     
@@ -215,18 +207,27 @@ try:
         
         with col_chart:
             st.caption(f"Dữ liệu thị trường 30 ngày qua và Dự báo 7 ngày tới cho **{selected_case}**")
+            base_price = df[df['case_name'] == selected_case]['current_price'].values[0]
             
-            # 🚀 GỌI HÀM LẤY DỮ LIỆU LỊCH SỬ TẠI ĐÂY
-            dates, opens, highs, lows, closes = fetch_historical_data(selected_case)
+            dates, opens, highs, lows, closes = fetch_historical_data(selected_case, base_price)
+            
+            sma_7 = pd.Series(closes).rolling(window=7).mean().tolist()
                 
             X = np.array(range(len(closes))).reshape(-1, 1)
             y = np.array(closes)
+            
+            poly = PolynomialFeatures(degree=3)
+            X_poly = poly.fit_transform(X)
+            
             model = LinearRegression()
-            model.fit(X, y)
+            model.fit(X_poly, y)
             
             future_days = 7
             future_X = np.array(range(len(closes), len(closes) + future_days)).reshape(-1, 1)
-            future_y = model.predict(future_X)
+            future_X_poly = poly.transform(future_X)
+            future_y = model.predict(future_X_poly)
+            
+            trend_y = model.predict(X_poly)
             future_dates = [dates[-1] + timedelta(days=i) for i in range(1, future_days + 1)]
             
             predicted_price_7_days = future_y[-1]
@@ -239,13 +240,18 @@ try:
             )])
             
             fig_candle.add_trace(go.Scatter(
-                x=dates, y=model.predict(X), mode='lines', 
-                line=dict(color='#f1c40f', width=2), name='Đường xu hướng AI (Trendline)'
+                x=dates, y=sma_7, mode='lines', 
+                line=dict(color='#3498db', width=1.5), name='SMA (7 ngày)'
+            ))
+            
+            fig_candle.add_trace(go.Scatter(
+                x=dates, y=trend_y, mode='lines', 
+                line=dict(color='#f1c40f', width=2), name='Xu hướng AI (Đa thức bậc 3)'
             ))
             
             fig_candle.add_trace(go.Scatter(
                 x=future_dates, y=future_y, mode='lines+markers', 
-                line=dict(color='#9b59b6', width=2, dash='dot'), name='Dự báo 7 ngày (AI Forecast)'
+                line=dict(color='#9b59b6', width=2, dash='dot'), name='Dự báo 7 ngày'
             ))
             
             fig_candle.update_layout(
