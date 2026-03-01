@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import requests
+import time
+import urllib.parse
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
@@ -48,26 +50,35 @@ case_contents = {
     "Number K": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "💰 The Professionals Faction"]
 }
 
-@st.cache_data(ttl=1800)
-def fetch_live_prices():
-    # 🚀 Kỹ thuật Fake User-Agent để vượt tường lửa Cloudflare
+@st.cache_data(ttl=3600, show_spinner=False) # Cache 1 tiếng để Steam không ban IP
+def fetch_steam_prices_directly(item_names):
+    scraped_data = {}
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "application/json"
     }
-    try:
-        url = "https://csgobackpack.net/api/GetItemsList/v2/?no_details=true"
-        # Bắn request kèm theo mặt nạ header
-        response = requests.get(url, headers=headers, timeout=15)
+    
+    for item in item_names:
+        safe_name = urllib.parse.quote(item)
+        url = f"https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name={safe_name}"
         
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                return data['items_list']
-        return None
-    except Exception as e:
-        print(f"Lỗi API: {e}")
-        return None
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    lowest_price_str = data.get('lowest_price', '0').replace('$', '')
+                    scraped_data[item] = float(lowest_price_str)
+            elif response.status_code == 429:
+                # Nếu bị Steam giới hạn (Too Many Requests), dừng cào ngay lập tức
+                break
+        except Exception as e:
+            pass
+            
+        # 🛑 LUẬT SỐNG CÒN: Nghỉ 3 giây sau mỗi lần cào để tàng hình trước hệ thống Steam
+        time.sleep(3)
+        
+    return scraped_data
 
 @st.cache_data(ttl=86400)
 def fetch_historical_data(item_name, base_price):
@@ -106,20 +117,23 @@ try:
         df['quantity'] = 0
         df.loc[df['case_name'] == 'Fracture Case', 'quantity'] = 10
 
-    # Nếu đang dùng file lưu cache cũ thì cần clear cache trên Streamlit (góc phải trên cùng -> Clear cache)
-    live_data = fetch_live_prices()
+    st.sidebar.header("⚙️ Dashboard Controls")
     
-    if live_data:
+    # Kích hoạt Cỗ máy cào dữ liệu
+    items_to_scrape = df['case_name'].tolist()
+    
+    with st.sidebar:
+        with st.spinner("⏳ Đang lấy giá thực từ Steam Market (Mất ~1 phút)..."):
+            live_steam_data = fetch_steam_prices_directly(items_to_scrape)
+    
+    if live_steam_data:
         for index, row in df.iterrows():
             item_name = row['case_name']
-            if item_name in live_data:
-                price_info = live_data[item_name].get('price', {})
-                avg_price = price_info.get('7_days', {}).get('average')
-                if avg_price and avg_price > 0:
-                    df.at[index, 'current_price'] = float(avg_price)
-        st.sidebar.success("🟢 API Connected: Real-time Data Synced")
+            if item_name in live_steam_data:
+                df.at[index, 'current_price'] = live_steam_data[item_name]
+        st.sidebar.success(f"🟢 Real-time Data: Scraped {len(live_steam_data)} items from Steam!")
     else:
-        st.sidebar.warning("🟡 API Offline: Using Local CSV Data")
+        st.sidebar.warning("🟡 Cào thất bại / Chặn IP: Dùng dữ liệu CSV.")
 
     df['purchase_price'] = pd.to_numeric(df['purchase_price'], errors='coerce')
     df['current_price'] = pd.to_numeric(df['current_price'], errors='coerce')
@@ -129,8 +143,6 @@ try:
     tab1, tab2, tab3 = st.tabs(["📊 Market Overview", "💼 Asset Allocation", "🤖 AI Price Prediction (ML)"])
 
     with tab1:
-        st.sidebar.header("⚙️ Dashboard Controls")
-        
         st.sidebar.subheader("🎒 My Inventory (Edit Live)")
         edited_inventory = st.sidebar.data_editor(
             df[['case_name', 'quantity']], 
@@ -217,9 +229,9 @@ try:
         
         with col_chart:
             st.caption(f"Dữ liệu thị trường 30 ngày qua và Dự báo 7 ngày tới cho **{selected_case}**")
-            base_price = df[df['case_name'] == selected_case]['current_price'].values[0]
+            current_simulated_price = df[df['case_name'] == selected_case]['current_price'].values[0]
             
-            dates, opens, highs, lows, closes = fetch_historical_data(selected_case, base_price)
+            dates, opens, highs, lows, closes = fetch_historical_data(selected_case, current_simulated_price)
             
             sma_7 = pd.Series(closes).rolling(window=7).mean().tolist()
                 
