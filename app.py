@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import requests
-import urllib.parse
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
@@ -49,25 +48,25 @@ case_contents = {
     "Number K": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "💰 The Professionals Faction"]
 }
 
-@st.cache_data(ttl=1800) # Cache 30 phút cho giá Live
+@st.cache_data(ttl=1800)
 def fetch_live_prices():
-    # Sử dụng API Steam Market trung gian ổn định hơn (csgobackpack hay chết do quá tải)
+    # 🚀 Kỹ thuật Fake User-Agent để vượt tường lửa Cloudflare
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/json"
+    }
     try:
-        url = "https://api.steamapis.com/market/items/730?api_key=YOUR_API_KEY_HERE" # API mẫu
-        # Vì SteamAPIs cần key trả phí, ta dùng một trick nhỏ: Kéo dữ liệu giá tĩnh từ kho GitHub update hàng ngày
-        fallback_url = "https://raw.githubusercontent.com/jonese1234/Csgo-Case-Data/master/latest.json" 
-        response = requests.get(fallback_url, timeout=10)
+        url = "https://csgobackpack.net/api/GetItemsList/v2/?no_details=true"
+        # Bắn request kèm theo mặt nạ header
+        response = requests.get(url, headers=headers, timeout=15)
         
         if response.status_code == 200:
             data = response.json()
-            # Cấu trúc lại dữ liệu cho giống với format cũ của cậu để không hỏng code bên dưới
-            reformatted_data = {}
-            for case_name, case_data in data.get('cases', {}).items():
-                 reformatted_data[case_name] = {'price': {'7_days': {'average': case_data.get('cost', 0)}}}
-            return reformatted_data
+            if data.get('success'):
+                return data['items_list']
         return None
     except Exception as e:
-        print(f"API Error: {e}")
+        print(f"Lỗi API: {e}")
         return None
 
 @st.cache_data(ttl=86400)
@@ -107,6 +106,7 @@ try:
         df['quantity'] = 0
         df.loc[df['case_name'] == 'Fracture Case', 'quantity'] = 10
 
+    # Nếu đang dùng file lưu cache cũ thì cần clear cache trên Streamlit (góc phải trên cùng -> Clear cache)
     live_data = fetch_live_prices()
     
     if live_data:
