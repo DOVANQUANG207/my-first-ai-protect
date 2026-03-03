@@ -8,8 +8,6 @@ from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import requests
-import time
-import urllib.parse
 
 st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
 st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
@@ -50,35 +48,24 @@ case_contents = {
     "Number K": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "💰 The Professionals Faction"]
 }
 
-@st.cache_data(ttl=3600, show_spinner=False) # Cache 1 tiếng để Steam không ban IP
-def fetch_steam_prices_directly(item_names):
-    scraped_data = {}
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "application/json"
-    }
-    
-    for item in item_names:
-        safe_name = urllib.parse.quote(item)
-        url = f"https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name={safe_name}"
-        
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    lowest_price_str = data.get('lowest_price', '0').replace('$', '')
-                    scraped_data[item] = float(lowest_price_str)
-            elif response.status_code == 429:
-                # Nếu bị Steam giới hạn (Too Many Requests), dừng cào ngay lập tức
-                break
-        except Exception as e:
-            pass
-            
-        # 🛑 LUẬT SỐNG CÒN: Nghỉ 3 giây sau mỗi lần cào để tàng hình trước hệ thống Steam
-        time.sleep(3)
-        
-    return scraped_data
+@st.cache_data(ttl=3600)
+def fetch_proxy_prices():
+    # Sử dụng kho JSON được tự động update giá CS2 hàng ngày
+    url = "https://raw.githubusercontent.com/jonese1234/Csgo-Case-Data/master/latest.json"
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            # Trích xuất giá case từ file JSON
+            scraped_data = {}
+            if 'cases' in data:
+                 for case_name, case_info in data['cases'].items():
+                     scraped_data[case_name] = case_info.get('cost', 0)
+            return scraped_data
+        return None
+    except Exception as e:
+        print(f"Proxy Fetch Error: {e}")
+        return None
 
 @st.cache_data(ttl=86400)
 def fetch_historical_data(item_name, base_price):
@@ -119,21 +106,20 @@ try:
 
     st.sidebar.header("⚙️ Dashboard Controls")
     
-    # Kích hoạt Cỗ máy cào dữ liệu
-    items_to_scrape = df['case_name'].tolist()
-    
     with st.sidebar:
-        with st.spinner("⏳ Đang lấy giá thực từ Steam Market (Mất ~1 phút)..."):
-            live_steam_data = fetch_steam_prices_directly(items_to_scrape)
+        with st.spinner("⏳ Đang đồng bộ dữ liệu thị trường mới nhất..."):
+            live_steam_data = fetch_proxy_prices()
     
     if live_steam_data:
         for index, row in df.iterrows():
             item_name = row['case_name']
             if item_name in live_steam_data:
-                df.at[index, 'current_price'] = live_steam_data[item_name]
-        st.sidebar.success(f"🟢 Real-time Data: Scraped {len(live_steam_data)} items from Steam!")
+                # Chỉ update nếu giá lớn hơn 0
+                if live_steam_data[item_name] > 0:
+                     df.at[index, 'current_price'] = live_steam_data[item_name]
+        st.sidebar.success(f"🟢 Real-time Data: Synced {len(live_steam_data)} items!")
     else:
-        st.sidebar.warning("🟡 Cào thất bại / Chặn IP: Dùng dữ liệu CSV.")
+        st.sidebar.warning("🟡 Mất kết nối Proxy: Dùng dữ liệu CSV.")
 
     df['purchase_price'] = pd.to_numeric(df['purchase_price'], errors='coerce')
     df['current_price'] = pd.to_numeric(df['current_price'], errors='coerce')
