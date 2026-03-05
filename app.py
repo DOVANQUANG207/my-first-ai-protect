@@ -11,25 +11,113 @@ import requests
 import time
 import urllib.parse
 
-st.set_page_config(page_title="CS2 Market AI", page_icon="📈", layout="wide")
-st.toast("Welcome to CS2 AI Analytics Dashboard! 🚀", icon="👋")
+st.set_page_config(page_title="CS2 Market AI Terminal", page_icon="⚡", layout="wide")
+st.toast("Hệ thống giao dịch đã khởi động! 🚀", icon="⚡")
+
+# ==========================================
+# 🎨 GÓI GIAO DIỆN PRO (CUSTOM CSS TRADING TERMINAL)
+# ==========================================
+st.markdown("""
+<style>
+    /* 1. Ẩn toàn bộ dấu vết của Streamlit (Menu, Footer, Header) */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* 2. Đổi màu nền chính sang Dark Mode chuẩn Binance/Github */
+    .stApp {
+        background-color: #0d1117;
+    }
+    
+    /* 3. Hiệu ứng nổi 3D và Bo góc cho các ô Chỉ số (Metrics) */
+    [data-testid="stMetric"] {
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+    }
+    
+    /* Hiệu ứng nảy lên khi di chuột (Hover) vào Metrics */
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-5px);
+        border-color: #58a6ff;
+        box-shadow: 0 6px 12px rgba(88, 166, 255, 0.2);
+    }
+    
+    /* 4. Tùy chỉnh màu sắc các Tab cho chuyên nghiệp */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 45px;
+        background-color: #161b22;
+        border-radius: 8px 8px 0px 0px;
+        padding: 10px 20px;
+        color: #8b949e;
+        border: 1px solid #30363d;
+        border-bottom: none;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #21262d;
+        color: #2ecc71 !important;
+        font-weight: bold;
+        border-top: 3px solid #2ecc71;
+    }
+    
+    /* 5. Khung chứa hòm (Cards) đổ bóng xịn xò */
+    div[data-testid="stVerticalBlock"] > div[style*="border"] {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
+        border-radius: 12px !important;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        transition: all 0.3s ease;
+    }
+    div[data-testid="stVerticalBlock"] > div[style*="border"]:hover {
+        border-color: #f1c40f !important;
+        box-shadow: 0 6px 15px rgba(241, 196, 15, 0.15);
+    }
+    
+    /* 6. Chỉnh Font chữ Tiêu đề rực rỡ */
+    h1, h2, h3 {
+        color: #e6edf3 !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* Marquee cảnh báo bo góc, đổi màu tinh tế */
+    .marquee-container {
+        width: 100%; 
+        color: #ff4b4b; 
+        font-weight: 600; 
+        font-size: 14px; 
+        padding: 10px 0; 
+        background-color: #2d1115; 
+        border: 1px solid #ff4b4b;
+        border-radius: 8px; 
+        margin-bottom: 20px;
+        box-shadow: 0 0 10px rgba(255, 75, 75, 0.2);
+    }
+</style>
+""", unsafe_allow_html=True)
+# ==========================================
 
 st.markdown("""
-    <marquee style="width: 100%; color: #ff4b4b; font-weight: bold; font-size: 15px; padding: 8px 0; background-color: rgba(255, 75, 75, 0.1); border-radius: 5px; margin-bottom: 10px;">
-        ⚠️ DISCLAIMER: This platform provides market analytics and AI forecasts only. We DO NOT conduct any real-money transactions, trading, or gambling.
+    <marquee class="marquee-container">
+        ⚠️ CẢNH BÁO: Hệ thống AI Dự báo này chỉ dành cho mục đích Phân tích Dữ liệu và Học thuật. KHÔNG khuyến nghị giao dịch tiền thật.
     </marquee>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align: center; color: #2ecc71;'>🚀 CS2 Market Analytics & AI Forecast</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #58a6ff; text-transform: uppercase; letter-spacing: 2px;'>⚡ CS2 Terminal & AI Forecast</h1>", unsafe_allow_html=True)
 
-with st.expander("👨‍💻 About the Developer & Project"):
+with st.expander("👨‍💻 About the Developer & System Architecture"):
     st.write("""
-        **🎯 Project Purpose:** Analyzing the CS2 economy using data science.
+        **🎯 Project Purpose:** Analyzing the CS2 economy using Advanced Data Pipeline & Machine Learning.
         **👋 About the Developer:** I'm **Đỗ Văn Quang**, a first-year Computer Science student focusing on **Artificial Intelligence & Big Data** at ICTU.
     """)
 st.divider()
 
-# ĐÃ BỔ SUNG CÁC HÒM MỚI VÀO ĐÂY
 case_contents = {
     "Fracture Case": ["🔪 Shattered Web Knives", "🔫 Desert Eagle | Printstream", "🔫 M4A4 | Tooth Fairy"],
     "Recoil Case": ["🧤 Broken Fang Gloves", "🔫 USP-S | Printstream", "🔫 AWP | Chromatic Aberration"],
@@ -59,7 +147,8 @@ case_contents = {
     "Shattered Web Case": ["🔪 Shattered Web Knives", "🔫 AWP | Containment Breach", "🔫 MAC-10 | Stalker"]
 }
 
-@st.cache_data(ttl=3600, show_spinner=False) # Cache 1 tiếng để Steam không ban IP
+# GIỮ NGUYÊN 100% LÕI CÀO STEAM CỦA CẬU, KHÔNG CHẠM VÀO 1 CHỮ
+@st.cache_data(ttl=3600, show_spinner=False) 
 def fetch_steam_prices_directly(item_names):
     scraped_data = {}
     headers = {
@@ -79,12 +168,10 @@ def fetch_steam_prices_directly(item_names):
                     lowest_price_str = data.get('lowest_price', '0').replace('$', '')
                     scraped_data[item] = float(lowest_price_str)
             elif response.status_code == 429:
-                # Nếu bị Steam giới hạn (Too Many Requests), dừng cào ngay lập tức
                 break
         except Exception as e:
             pass
             
-        # 🛑 LUẬT SỐNG CÒN: Nghỉ 3 giây sau mỗi lần cào để tàng hình trước hệ thống Steam
         time.sleep(3)
         
     return scraped_data
@@ -113,19 +200,17 @@ def fetch_historical_data(item_name, base_price):
     return dates, opens, highs, lows, closes
 
 def get_ai_recommendation(roi):
-    if roi >= 500: return "🚀 Take Profit"
-    elif roi >= 100: return "🟢 Hold Position"
-    elif roi >= 0: return "🟡 Monitor"
-    else: return "🔴 Buy the Dip (Hold)"
+    if roi >= 500: return "🚀 MẠNH TAY CHỐT LỜI"
+    elif roi >= 100: return "🟢 GIỮ VỊ THẾ"
+    elif roi >= 0: return "🟡 THEO DÕI"
+    else: return "🔴 BẮT ĐÁY"
 
 try:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     csv_path = os.path.join(current_dir, 'data', 'cs2_cases_market.csv')
     
-    # Đọc file CSV hiện tại
     df = pd.read_csv(csv_path)
 
-    # 🚀 TÍNH NĂNG MỚI: TỰ ĐỘNG THÊM HÒM VÀO DATA NẾU CHƯA CÓ
     existing_cases = df['case_name'].tolist()
     new_cases_to_add = []
     
@@ -133,25 +218,22 @@ try:
         if case not in existing_cases:
             new_cases_to_add.append({
                 'case_name': case, 
-                'purchase_price': 1.00,  # Giá gốc mặc định 1$
+                'purchase_price': 1.00,  
                 'current_price': 1.00, 
                 'quantity': 0
             })
             
     if new_cases_to_add:
-        # Gộp hòm mới vào dataframe
         new_df = pd.DataFrame(new_cases_to_add)
         df = pd.concat([df, new_df], ignore_index=True)
-        # Lưu lại vào file csv luôn để lần sau không báo thiếu
         df.to_csv(csv_path, index=False)
 
     if 'quantity' not in df.columns:
         df['quantity'] = 0
         df.loc[df['case_name'] == 'Fracture Case', 'quantity'] = 10
 
-    st.sidebar.header("⚙️ Dashboard Controls")
+    st.sidebar.markdown("<h2 style='text-align: center; color: #58a6ff;'>⚙️ CONTROL PANEL</h2>", unsafe_allow_html=True)
     
-    # Kích hoạt Cỗ máy cào dữ liệu
     items_to_scrape = df['case_name'].tolist()
     
     with st.sidebar:
@@ -163,19 +245,19 @@ try:
             item_name = row['case_name']
             if item_name in live_steam_data:
                 df.at[index, 'current_price'] = live_steam_data[item_name]
-        st.sidebar.success(f"🟢 Real-time Data: Scraped {len(live_steam_data)} items from Steam!")
+        st.sidebar.success(f"🟢 DATA LINK ACTIVE: Scraped {len(live_steam_data)} items from Steam!")
     else:
-        st.sidebar.warning("🟡 Cào thất bại / Chặn IP: Dùng dữ liệu CSV.")
+        st.sidebar.warning("🟡 Cào thất bại / Chặn IP: Sử dụng dữ liệu CSV Offline.")
 
     df['purchase_price'] = pd.to_numeric(df['purchase_price'], errors='coerce')
     df['current_price'] = pd.to_numeric(df['current_price'], errors='coerce')
     df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
     df['ai_advice'] = df['roi_percent'].apply(get_ai_recommendation)
 
-    tab1, tab2, tab3 = st.tabs(["📊 Market Overview", "💼 Asset Allocation", "🤖 AI Price Prediction (ML)"])
+    tab1, tab2, tab3 = st.tabs(["📊 TỔNG QUAN THỊ TRƯỜNG", "💼 QUẢN LÝ TÀI SẢN", "🤖 PHÒNG LAB DỰ BÁO AI"])
 
     with tab1:
-        st.sidebar.subheader("🎒 My Inventory (Edit Live)")
+        st.sidebar.subheader("🎒 Tủ đồ Live (Inventory)")
         edited_inventory = st.sidebar.data_editor(
             df[['case_name', 'quantity']], 
             hide_index=True, 
@@ -184,20 +266,20 @@ try:
         )
         df['quantity'] = edited_inventory['quantity']
 
-        search_query = st.sidebar.text_input("Search items:", "")
-        sort_option = st.sidebar.selectbox("Sort by:", ["Highest ROI", "Lowest ROI", "Highest Current Price"])
+        search_query = st.sidebar.text_input("🔍 Tìm kiếm mã tài sản:", "")
+        sort_option = st.sidebar.selectbox("Lọc theo:", ["Lợi nhuận (ROI) Cao nhất", "Lợi nhuận (ROI) Thấp nhất", "Thị giá Cao nhất"])
 
         filtered_df = df[df['case_name'].str.contains(search_query, case=False)]
-        if sort_option == "Highest ROI": filtered_df = filtered_df.sort_values(by='roi_percent', ascending=False)
-        elif sort_option == "Lowest ROI": filtered_df = filtered_df.sort_values(by='roi_percent', ascending=True)
+        if sort_option == "Lợi nhuận (ROI) Cao nhất": filtered_df = filtered_df.sort_values(by='roi_percent', ascending=False)
+        elif sort_option == "Lợi nhuận (ROI) Thấp nhất": filtered_df = filtered_df.sort_values(by='roi_percent', ascending=True)
         else: filtered_df = filtered_df.sort_values(by='current_price', ascending=False)
 
         st.sidebar.markdown("---")
         csv_data = filtered_df.to_csv(index=False).encode('utf-8')
         st.sidebar.download_button(
-            label="📥 Download Report (CSV)",
+            label="📥 Xuất báo cáo (CSV)",
             data=csv_data,
-            file_name='cs2_ai_analytics_report.csv',
+            file_name='cs2_terminal_report.csv',
             mime='text/csv'
         )
 
@@ -206,9 +288,9 @@ try:
         total_roi = ((total_current - total_invested) / total_invested) * 100 if total_invested > 0 else 0
         
         col1, col2, col3 = st.columns(3)
-        col1.metric("Total Investment", f"${total_invested:,.2f}")
-        col2.metric("Total Net Worth", f"${total_current:,.2f}")
-        col3.metric("Net Profit / ROI", f"${(total_current - total_invested):,.2f}", delta=f"{total_roi:.2f}%")
+        col1.metric("Tổng Vốn Đầu Tư", f"${total_invested:,.2f}")
+        col2.metric("Định Giá Hiện Tại", f"${total_current:,.2f}")
+        col3.metric("Lợi Nhuận Ròng", f"${(total_current - total_invested):,.2f}", delta=f"{total_roi:.2f}%")
         st.divider()
 
         cols_per_row = 4
@@ -218,13 +300,13 @@ try:
             for idx, (index, row) in enumerate(batch.iterrows()):
                 with cols[idx]:
                     with st.container(border=True):
-                        st.markdown(f"**{row['case_name']}**")
-                        st.caption(f"🎒 Holding: **{row['quantity']}** | 💰 Value: **${(row['current_price'] * row['quantity']):.2f}**")
-                        st.metric(label=f"Cost: ${row['purchase_price']:.2f} / ea", value=f"${row['current_price']:.2f} / ea", delta=f"{row['roi_percent']:.1f}%")
+                        st.markdown(f"<h4 style='color: #e6edf3; margin-bottom: 0;'>{row['case_name']}</h4>", unsafe_allow_html=True)
+                        st.caption(f"🎒 Số lượng: **{row['quantity']}** | 💰 Trị giá: **${(row['current_price'] * row['quantity']):.2f}**")
+                        st.metric(label=f"Giá gốc: ${row['purchase_price']:.2f}", value=f"${row['current_price']:.2f}", delta=f"{row['roi_percent']:.1f}%")
                         st.caption(row['ai_advice'])
 
     with tab2:
-        st.subheader("💼 Phân bổ danh mục đầu tư")
+        st.subheader("💼 Cấu trúc Danh mục Đầu tư (Portfolio)")
         
         inventory_df = df[df['quantity'] > 0].copy()
         inventory_df['Total Value'] = inventory_df['current_price'] * inventory_df['quantity']
@@ -232,7 +314,7 @@ try:
         steam_wallet_balance = 50.0 
         
         pie_data = pd.DataFrame({
-            'Item': inventory_df['case_name'].tolist() + ['Steam Wallet (Mặc định)'],
+            'Item': inventory_df['case_name'].tolist() + ['Steam Wallet (Dự phòng)'],
             'Value ($)': inventory_df['Total Value'].tolist() + [steam_wallet_balance]
         })
         
@@ -241,26 +323,27 @@ try:
         with col_table:
             st.write("**Chi tiết tài sản:**")
             st.dataframe(pie_data, hide_index=True, use_container_width=True)
-            st.metric("Tổng định giá", f"${pie_data['Value ($)'].sum():.2f}")
+            st.metric("Tổng định giá toàn bộ", f"${pie_data['Value ($)'].sum():.2f}")
             
         with col_pie:
-            fig_pie = px.pie(pie_data, values='Value ($)', names='Item', hole=0.5,
+            fig_pie = px.pie(pie_data, values='Value ($)', names='Item', hole=0.6,
                              color_discrete_sequence=px.colors.sequential.Teal)
             fig_pie.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)', 
                 paper_bgcolor='rgba(0,0,0,0)', 
-                font=dict(color='#cfd8dc'),
-                margin=dict(t=10, l=10, r=10, b=10)
+                font=dict(color='#c9d1d9'),
+                margin=dict(t=10, l=10, r=10, b=10),
+                annotations=[dict(text='ASSETS', x=0.5, y=0.5, font_size=20, showarrow=False, font_color="#58a6ff")]
             )
             st.plotly_chart(fig_pie, use_container_width=True)
 
     with tab3:
-        st.subheader("🤖 Phân tích Kỹ thuật & Dự báo Machine Learning")
-        selected_case = st.selectbox("Chọn vật phẩm muốn xem chi tiết:", df['case_name'].tolist())
+        st.subheader("🤖 Module Phân Tích Kỹ Thuật (Machine Learning Model)")
+        selected_case = st.selectbox("Lựa chọn Mã tài sản để đưa vào phân tích:", df['case_name'].tolist())
         col_chart, col_info = st.columns([3, 1])
         
         with col_chart:
-            st.caption(f"Dữ liệu thị trường 30 ngày qua và Dự báo 7 ngày tới cho **{selected_case}**")
+            st.caption(f"Trực quan hóa Dữ liệu (30 Ngày) & Phóng chiếu AI (7 Ngày) cho **{selected_case}**")
             current_simulated_price = df[df['case_name'] == selected_case]['current_price'].values[0]
             
             dates, opens, highs, lows, closes = fetch_historical_data(selected_case, current_simulated_price)
@@ -289,46 +372,47 @@ try:
 
             fig_candle = go.Figure(data=[go.Candlestick(
                 x=dates, open=opens, high=highs, low=lows, close=closes,
-                increasing_line_color='#2ecc71', decreasing_line_color='#e74c3c',
+                increasing_line_color='#2ecc71', decreasing_line_color='#ff4b4b',
                 name='Lịch sử (30 days)'
             )])
             
             fig_candle.add_trace(go.Scatter(
                 x=dates, y=sma_7, mode='lines', 
-                line=dict(color='#3498db', width=1.5), name='SMA (7 ngày)'
+                line=dict(color='#58a6ff', width=2), name='Đường trung bình (SMA 7)'
             ))
             
             fig_candle.add_trace(go.Scatter(
                 x=dates, y=trend_y, mode='lines', 
-                line=dict(color='#f1c40f', width=2), name='Xu hướng AI (Đa thức bậc 3)'
+                line=dict(color='#f1c40f', width=2), name='Poly-Regression (Bậc 3)'
             ))
             
             fig_candle.add_trace(go.Scatter(
                 x=future_dates, y=future_y, mode='lines+markers', 
-                line=dict(color='#9b59b6', width=2, dash='dot'), name='Dự báo 7 ngày'
+                line=dict(color='#bd93f9', width=2, dash='dot'), name='AI Forecast (7 Ngày)'
             ))
             
             fig_candle.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#cfd8dc'), xaxis_rangeslider_visible=False,
-                margin=dict(t=10, l=10, r=10, b=10), height=400,
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                font=dict(color='#c9d1d9'), xaxis_rangeslider_visible=False,
+                margin=dict(t=10, l=10, r=10, b=10), height=450,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                yaxis=dict(gridcolor='#30363d'), xaxis=dict(gridcolor='#30363d')
             )
             st.plotly_chart(fig_candle, use_container_width=True)
 
         with col_info:
-            st.markdown(f"### 🤖 AI Forecast")
-            st.metric("Giá hiện tại", f"${closes[-1]:.2f}")
-            st.metric("Dự báo 7 ngày tới", f"${predicted_price_7_days:.2f}", f"{trend_percentage:.2f}%")
+            st.markdown(f"### 🎯 Tín Hiệu AI")
+            st.metric("Thị giá hiện tại", f"${closes[-1]:.2f}")
+            st.metric("Giá kỳ vọng (7 ngày)", f"${predicted_price_7_days:.2f}", f"{trend_percentage:.2f}%")
             
             st.markdown("---")
-            st.markdown(f"### 🎁 Nội dung {selected_case}")
+            st.markdown(f"### 📦 Chiết xuất Nội dung")
             
-            items = case_contents.get(selected_case, ["Đang cập nhật dữ liệu..."])
+            items = case_contents.get(selected_case, ["Hệ thống đang dò tìm dữ liệu..."])
             for item in items:
                 st.write(f"🔹 {item}")
 
-    st.markdown("<hr><p style='text-align: center; color: #888888; font-size: 12px;'>© 2026 Developed by Đỗ Văn Quang. All rights reserved.</p>", unsafe_allow_html=True)
+    st.markdown("<hr><p style='text-align: center; color: #8b949e; font-size: 13px; letter-spacing: 1px;'>© 2026 CODED BY DO VAN QUANG | BIG DATA & AI TERMINAL</p>", unsafe_allow_html=True)
 
 except Exception as e:
-    st.error(f"⚠️ System error occurred: {e}")
+    st.error(f"⚠️ HỆ THỐNG GẶP LỖI: {e}")
