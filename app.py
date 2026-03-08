@@ -118,6 +118,7 @@ with st.expander("👨‍💻 About the Developer & System Architecture"):
     """)
 st.divider()
 
+# ĐÃ BỔ SUNG VÀ CHUẨN HÓA DÀN NHÂN VẬT (AGENT SKINS)
 case_contents = {
     "Fracture Case": ["🔪 Shattered Web Knives", "🔫 Desert Eagle | Printstream", "🔫 M4A4 | Tooth Fairy"],
     "Recoil Case": ["🧤 Broken Fang Gloves", "🔫 USP-S | Printstream", "🔫 AWP | Chromatic Aberration"],
@@ -135,8 +136,6 @@ case_contents = {
     "Spectrum 2 Case": ["🔪 Spectrum Knives", "🔫 AK-47 | The Empress", "🔫 P250 | See Ya Later"],
     "Huntsman Weapon Case": ["🔪 Huntsman Knife", "🔫 AK-47 | Vulcan", "🔫 M4A4 | Desert-Strike"],
     "Paris 2023 Legends Autograph Capsule": ["🌟 ZywOo (Gold)", "🌟 s1mple (Holo)", "🌟 ropz (Foil)"],
-    "Sir Bloody Miami Darryl": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "😎 The Professionals Faction"],
-    "Number K": ["👔 Premium Agent Skin", "🎙️ Unique Voice Lines", "💰 The Professionals Faction"],
     "Chroma 3 Case": ["🔪 Standard Knives", "🔫 M4A1-S | Chantico's Fire", "🔫 AWP | Fever Dream"],
     "Chroma 2 Case": ["🔪 Standard Knives", "🔫 M4A1-S | Hyper Beast", "🔫 MAC-10 | Neon Rider"],
     "Chroma Case": ["🔪 Standard Knives", "🔫 Galil AR | Chatterbox", "🔫 AWP | Man-o'-war"],
@@ -144,10 +143,17 @@ case_contents = {
     "Gamma 2 Case": ["🔪 Gamma Knives", "🔫 AK-47 | Neon Revolution", "🔫 FAMAS | Roll Cage"],
     "Shadow Case": ["🔪 Shadow Daggers", "🔫 M4A1-S | Golden Coil", "🔫 USP-S | Kill Confirmed"],
     "Operation Wildfire Case": ["🔪 Bowie Knife", "🔫 AK-47 | Fuel Injector", "🔫 M4A4 | The Battlestar"],
-    "Shattered Web Case": ["🔪 Shattered Web Knives", "🔫 AWP | Containment Breach", "🔫 MAC-10 | Stalker"]
+    "Shattered Web Case": ["🔪 Shattered Web Knives", "🔫 AWP | Containment Breach", "🔫 MAC-10 | Stalker"],
+    # Phân khu Đặc vụ (Agents)
+    "Special Agent Ava | FBI": ["🕵️‍♀️ Master Agent", "🎙️ Unique Voice Lines", "🦅 FBI Faction"],
+    "Getaway Sally | The Professionals": ["🏃‍♀️ Superior Agent", "🎙️ Unique Voice Lines", "💰 The Professionals"],
+    "Number K | The Professionals": ["👔 Premium Agent", "🎙️ Unique Voice Lines", "💰 The Professionals"],
+    "Sir Bloody Miami Darryl | The Professionals": ["👔 Premium Agent", "🎙️ Unique Voice Lines", "😎 The Professionals"],
+    "Safecracker Voltzmann | The Professionals": ["🔓 Exceptional Agent", "🎙️ Unique Voice Lines", "💰 The Professionals"],
+    "Cmdr. Mae 'Dead Cold' Jamison | SWAT": ["🥶 Master Agent", "🎙️ Unique Voice Lines", "🚔 SWAT Faction"],
+    "Lt. Commander Ricksaw | NSWC SEAL": ["🪖 Master Agent", "🎙️ Unique Voice Lines", "🌊 NSWC SEAL"]
 }
 
-# GIỮ NGUYÊN 100% LÕI CÀO STEAM CỦA CẬU, KHÔNG CHẠM VÀO 1 CHỮ
 @st.cache_data(ttl=3600, show_spinner=False) 
 def fetch_steam_prices_directly(item_names):
     scraped_data = {}
@@ -218,8 +224,8 @@ try:
         if case not in existing_cases:
             new_cases_to_add.append({
                 'case_name': case, 
-                'purchase_price': 1.00,  
-                'current_price': 1.00, 
+                'purchase_price': 5.00,  # Đặt giá gốc mặc định cho nhân vật cao hơn chút
+                'current_price': 5.00, 
                 'quantity': 0
             })
             
@@ -237,7 +243,7 @@ try:
     items_to_scrape = df['case_name'].tolist()
     
     with st.sidebar:
-        with st.spinner("⏳ Đang lấy giá thực từ Steam Market (Mất ~1 phút)..."):
+        with st.spinner("⏳ Đang lấy giá thực từ Steam Market (Mất khoảng 1-2 phút)..."):
             live_steam_data = fetch_steam_prices_directly(items_to_scrape)
     
     if live_steam_data:
