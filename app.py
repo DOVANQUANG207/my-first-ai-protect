@@ -107,6 +107,18 @@ case_contents = {
     "Lt. Commander Ricksaw | NSWC SEAL": ["🪖 Master Agent", "🎙️ Unique Voice Lines", "🌊 NSWC SEAL"]
 }
 
+# ==========================================
+# 🤖 MODULE TELEGRAM BOT
+# ==========================================
+def send_telegram_message(msg):
+    bot_token = 'ĐIỀN_TOKEN_CỦA_CẬU_VÀO_ĐÂY'
+    bot_chat_id = 'ĐIỀN_CHAT_ID_CỦA_CẬU_VÀO_ĐÂY'
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={bot_chat_id}&text={msg}"
+    try:
+        requests.get(url, timeout=5)
+    except Exception as e:
+        pass
+
 @st.cache_data(ttl=3600, show_spinner=False) 
 def fetch_steam_prices_directly(item_names):
     scraped_data = {}
@@ -222,6 +234,25 @@ try:
         csv_data = filtered_df.to_csv(index=False).encode('utf-8')
         st.sidebar.download_button(label="📥 Xuất báo cáo (CSV)", data=csv_data, file_name='cs2_terminal_report.csv', mime='text/csv')
 
+        # ==========================================
+        # 🔔 NÚT GỬI CẢNH BÁO TELEGRAM
+        # ==========================================
+        st.sidebar.markdown("---")
+        if st.sidebar.button("🔔 Gửi Cảnh Báo Telegram"):
+            with st.spinner("Đang bắn tín hiệu..."):
+                alerts_sent = 0
+                for i, row in filtered_df.iterrows():
+                    # Chỉ báo động những món nào có Lãi suất trên 100% VÀ cậu đang nắm giữ (quantity > 0)
+                    if row['roi_percent'] >= 100 and row['quantity'] > 0:
+                        alert_text = f"🚀 CHỐT LỜI: {row['case_name']} | ROI: {row['roi_percent']:.1f}% | Lãi: ${(row['current_price'] - row['purchase_price']) * row['quantity']:.2f}"
+                        send_telegram_message(alert_text)
+                        alerts_sent += 1
+                        
+                if alerts_sent > 0:
+                    st.sidebar.success(f"✅ Đã bắn {alerts_sent} tín hiệu chốt lời!")
+                else:
+                    st.sidebar.info("Hệ thống an toàn: Chưa có mặt hàng nào đạt mức x2 (ROI >100%) trong kho để báo động.")
+
         total_invested = (filtered_df['purchase_price'] * filtered_df['quantity']).sum()
         total_current = (filtered_df['current_price'] * filtered_df['quantity']).sum()
         total_roi = ((total_current - total_invested) / total_invested) * 100 if total_invested > 0 else 0
@@ -278,9 +309,8 @@ try:
             st.caption(f"Trực quan hóa Dữ liệu (30 Ngày) & Phóng chiếu AI (7 Ngày) cho **{selected_case}**")
             current_simulated_price = df[df['case_name'] == selected_case]['current_price'].values[0]
             
-            dates, opens, highs, lows, closes = fetch_historical_data(selected_case, current_simulated_price)
-            
             # 🚀 TÍNH TOÁN DẢI BĂNG BOLLINGER (BOLLINGER BANDS)
+            dates, opens, highs, lows, closes = fetch_historical_data(selected_case, current_simulated_price)
             sma_7 = pd.Series(closes).rolling(window=7).mean().tolist()
             std_7 = pd.Series(closes).rolling(window=7).std().tolist()
             
@@ -298,7 +328,7 @@ try:
             
             # 🚀 CHẤM ĐIỂM ĐỘ TIN CẬY CỦA AI (R2 SCORE)
             r2_score = model.score(X_poly, y) * 100
-            confidence_level = max(0, min(100, r2_score)) # Ép khung 0-100%
+            confidence_level = max(0, min(100, r2_score)) 
             
             future_days = 7
             future_X = np.array(range(len(closes), len(closes) + future_days)).reshape(-1, 1)
@@ -317,13 +347,11 @@ try:
                 name='Lịch sử (30 days)'
             )])
             
-            # Vẽ Upper Band (Dải trên)
             fig_candle.add_trace(go.Scatter(
                 x=dates, y=upper_band, mode='lines', 
                 line=dict(color='rgba(255, 255, 255, 0.2)', width=1), name='Bollinger Upper'
             ))
             
-            # Vẽ Lower Band (Dải dưới) và đổ bóng vùng mờ giữa 2 dải
             fig_candle.add_trace(go.Scatter(
                 x=dates, y=lower_band, mode='lines', 
                 line=dict(color='rgba(255, 255, 255, 0.2)', width=1), fill='tonexty', fillcolor='rgba(88, 166, 255, 0.1)', name='Bollinger Lower'
@@ -357,7 +385,6 @@ try:
             st.metric("Thị giá hiện tại", f"${closes[-1]:.2f}")
             st.metric("Giá kỳ vọng (7 ngày)", f"${predicted_price_7_days:.2f}", f"{trend_percentage:.2f}%")
             
-            # Hiển thị độ tin cậy của thuật toán
             if confidence_level >= 80:
                 st.success(f"📈 Độ tin cậy Model: **{confidence_level:.1f}%** (Cao)")
             elif confidence_level >= 50:
