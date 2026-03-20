@@ -14,9 +14,6 @@ import urllib.parse
 st.set_page_config(page_title="CS2 Market AI Terminal", page_icon="⚡", layout="wide")
 st.toast("Hệ thống giao dịch đã khởi động! 🚀", icon="⚡")
 
-# ==========================================
-# 🎨 GÓI GIAO DIỆN PRO (CUSTOM CSS TRADING TERMINAL)
-# ==========================================
 st.markdown("""
 <style>
     #MainMenu {visibility: hidden;}
@@ -107,12 +104,10 @@ case_contents = {
     "Lt. Commander Ricksaw | NSWC SEAL": ["🪖 Master Agent", "🎙️ Unique Voice Lines", "🌊 NSWC SEAL"]
 }
 
-# ==========================================
-# 🤖 MODULE TELEGRAM BOT
-# ==========================================
+# SECTION: Telegram Bot
 def send_telegram_message(msg):
-    bot_token = 'ĐIỀN_TOKEN_CỦA_CẬU_VÀO_ĐÂY'
-    bot_chat_id = 'ĐIỀN_CHAT_ID_CỦA_CẬU_VÀO_ĐÂY'
+    bot_token = 'ĐIỀN_TOKEN_BOT_CỦA_CẬU'
+    bot_chat_id = 'ĐIỀN_CHAT_ID_CỦA_CẬU'
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={bot_chat_id}&text={msg}"
     try:
         requests.get(url, timeout=5)
@@ -196,7 +191,7 @@ try:
     items_to_scrape = df['case_name'].tolist()
     
     with st.sidebar:
-        with st.spinner("⏳ Đang lấy giá thực từ Steam Market (Mất khoảng 1-2 phút)..."):
+        with st.spinner("⏳ Đang lấy giá thực từ Steam Market..."):
             live_steam_data = fetch_steam_prices_directly(items_to_scrape)
     
     if live_steam_data:
@@ -234,15 +229,11 @@ try:
         csv_data = filtered_df.to_csv(index=False).encode('utf-8')
         st.sidebar.download_button(label="📥 Xuất báo cáo (CSV)", data=csv_data, file_name='cs2_terminal_report.csv', mime='text/csv')
 
-        # ==========================================
-        # 🔔 NÚT GỬI CẢNH BÁO TELEGRAM
-        # ==========================================
         st.sidebar.markdown("---")
         if st.sidebar.button("🔔 Gửi Cảnh Báo Telegram"):
             with st.spinner("Đang bắn tín hiệu..."):
                 alerts_sent = 0
                 for i, row in filtered_df.iterrows():
-                    # Chỉ báo động những món nào có Lãi suất trên 100% VÀ cậu đang nắm giữ (quantity > 0)
                     if row['roi_percent'] >= 100 and row['quantity'] > 0:
                         alert_text = f"🚀 CHỐT LỜI: {row['case_name']} | ROI: {row['roi_percent']:.1f}% | Lãi: ${(row['current_price'] - row['purchase_price']) * row['quantity']:.2f}"
                         send_telegram_message(alert_text)
@@ -251,7 +242,7 @@ try:
                 if alerts_sent > 0:
                     st.sidebar.success(f"✅ Đã bắn {alerts_sent} tín hiệu chốt lời!")
                 else:
-                    st.sidebar.info("Hệ thống an toàn: Chưa có mặt hàng nào đạt mức x2 (ROI >100%) trong kho để báo động.")
+                    st.sidebar.info("Kho an toàn: Chưa có mặt hàng nào đạt mức x2 để báo động.")
 
         total_invested = (filtered_df['purchase_price'] * filtered_df['quantity']).sum()
         total_current = (filtered_df['current_price'] * filtered_df['quantity']).sum()
@@ -271,7 +262,7 @@ try:
                 with cols[idx]:
                     with st.container(border=True):
                         st.markdown(f"<h4 style='color: #e6edf3; margin-bottom: 0;'>{row['case_name']}</h4>", unsafe_allow_html=True)
-                        st.caption(f"🎒 Số lượng: **{row['quantity']}** | 💰 Trị giá: **${(row['current_price'] * row['quantity']):.2f}**")
+                        st.caption(f"🎒 Số lượng: **{row['quantity']}** | Trị giá: **${(row['current_price'] * row['quantity']):.2f}**")
                         st.metric(label=f"Giá gốc: ${row['purchase_price']:.2f}", value=f"${row['current_price']:.2f}", delta=f"{row['roi_percent']:.1f}%")
                         st.caption(row['ai_advice'])
 
@@ -281,7 +272,7 @@ try:
         inventory_df['Total Value'] = inventory_df['current_price'] * inventory_df['quantity']
         steam_wallet_balance = 50.0 
         pie_data = pd.DataFrame({
-            'Item': inventory_df['case_name'].tolist() + ['Steam Wallet (Dự phòng)'],
+            'Item': inventory_df['case_name'].tolist() + ['Steam Wallet'],
             'Value ($)': inventory_df['Total Value'].tolist() + [steam_wallet_balance]
         })
         
@@ -301,15 +292,14 @@ try:
             st.plotly_chart(fig_pie, use_container_width=True)
 
     with tab3:
-        st.subheader("🤖 Module Phân Tích Kỹ Thuật (Machine Learning Model)")
+        st.subheader("🤖 Module Phân Tích Kỹ Thuật")
         selected_case = st.selectbox("Lựa chọn Mã tài sản để đưa vào phân tích:", df['case_name'].tolist())
         col_chart, col_info = st.columns([3, 1])
         
         with col_chart:
-            st.caption(f"Trực quan hóa Dữ liệu (30 Ngày) & Phóng chiếu AI (7 Ngày) cho **{selected_case}**")
+            st.caption(f"Dữ liệu (30 Ngày) & AI Dự báo (7 Ngày) cho **{selected_case}**")
             current_simulated_price = df[df['case_name'] == selected_case]['current_price'].values[0]
             
-            # 🚀 TÍNH TOÁN DẢI BĂNG BOLLINGER (BOLLINGER BANDS)
             dates, opens, highs, lows, closes = fetch_historical_data(selected_case, current_simulated_price)
             sma_7 = pd.Series(closes).rolling(window=7).mean().tolist()
             std_7 = pd.Series(closes).rolling(window=7).std().tolist()
@@ -326,7 +316,6 @@ try:
             model = LinearRegression()
             model.fit(X_poly, y)
             
-            # 🚀 CHẤM ĐIỂM ĐỘ TIN CẬY CỦA AI (R2 SCORE)
             r2_score = model.score(X_poly, y) * 100
             confidence_level = max(0, min(100, r2_score)) 
             
@@ -344,7 +333,7 @@ try:
             fig_candle = go.Figure(data=[go.Candlestick(
                 x=dates, open=opens, high=highs, low=lows, close=closes,
                 increasing_line_color='#2ecc71', decreasing_line_color='#ff4b4b',
-                name='Lịch sử (30 days)'
+                name='Lịch sử'
             )])
             
             fig_candle.add_trace(go.Scatter(
@@ -359,17 +348,17 @@ try:
             
             fig_candle.add_trace(go.Scatter(
                 x=dates, y=sma_7, mode='lines', 
-                line=dict(color='#58a6ff', width=2), name='Đường trung bình (SMA 7)'
+                line=dict(color='#58a6ff', width=2), name='Đường SMA 7'
             ))
             
             fig_candle.add_trace(go.Scatter(
                 x=dates, y=trend_y, mode='lines', 
-                line=dict(color='#f1c40f', width=2), name='Poly-Regression (Bậc 3)'
+                line=dict(color='#f1c40f', width=2), name='Poly-Regression'
             ))
             
             fig_candle.add_trace(go.Scatter(
                 x=future_dates, y=future_y, mode='lines+markers', 
-                line=dict(color='#bd93f9', width=2, dash='dot'), name='AI Forecast (7 Ngày)'
+                line=dict(color='#bd93f9', width=2, dash='dot'), name='AI Forecast'
             ))
             
             fig_candle.update_layout(
@@ -386,20 +375,20 @@ try:
             st.metric("Giá kỳ vọng (7 ngày)", f"${predicted_price_7_days:.2f}", f"{trend_percentage:.2f}%")
             
             if confidence_level >= 80:
-                st.success(f"📈 Độ tin cậy Model: **{confidence_level:.1f}%** (Cao)")
+                st.success(f"📈 Độ tin cậy: **{confidence_level:.1f}%**")
             elif confidence_level >= 50:
-                st.warning(f"🟨 Độ tin cậy Model: **{confidence_level:.1f}%** (Trung bình)")
+                st.warning(f"🟨 Độ tin cậy: **{confidence_level:.1f}%**")
             else:
-                st.error(f"⚠️ Độ tin cậy Model: **{confidence_level:.1f}%** (Thấp)")
+                st.error(f"⚠️ Độ tin cậy: **{confidence_level:.1f}%**")
             
             st.markdown("---")
-            st.markdown(f"### 📦 Chiết xuất Nội dung")
+            st.markdown(f"### 📦 Nội dung")
             
-            items = case_contents.get(selected_case, ["Hệ thống đang dò tìm dữ liệu..."])
+            items = case_contents.get(selected_case, ["Dữ liệu trống..."])
             for item in items:
                 st.write(f"🔹 {item}")
 
-    st.markdown("<hr><p style='text-align: center; color: #8b949e; font-size: 13px; letter-spacing: 1px;'>© 2026 CODED BY DO VAN QUANG | BIG DATA & AI TERMINAL</p>", unsafe_allow_html=True)
+    st.markdown("<hr><p style='text-align: center; color: #8b949e; font-size: 13px; letter-spacing: 1px;'>© 2026 CODED BY DO VAN QUANG</p>", unsafe_allow_html=True)
 
 except Exception as e:
-    st.error(f"⚠️ HỆ THỐNG GẶP LỖI: {e}")
+    st.error(f"⚠️ HỆ THỐNG LỖI: {e}")
