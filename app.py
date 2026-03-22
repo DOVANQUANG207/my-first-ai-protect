@@ -398,7 +398,7 @@ try:
         # Cấu hình API Key từ Streamlit Secrets
         try:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-           model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
         except Exception as e:
             st.error("⚠️ Lỗi: Chưa tìm thấy GEMINI_API_KEY trong Két sắt (Secrets) của Streamlit!")
             st.stop()
