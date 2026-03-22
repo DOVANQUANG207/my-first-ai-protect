@@ -208,7 +208,8 @@ try:
     df['roi_percent'] = ((df['current_price'] - df['purchase_price']) / df['purchase_price']) * 100
     df['ai_advice'] = df['roi_percent'].apply(get_ai_recommendation)
 
-    tab1, tab2, tab3 = st.tabs(["📊 TỔNG QUAN THỊ TRƯỜNG", "💼 QUẢN LÝ TÀI SẢN", "🤖 PHÒNG LAB DỰ BÁO AI"])
+    # Đã thêm Tab 4 vào hệ thống
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 TỔNG QUAN THỊ TRƯỜNG", "💼 QUẢN LÝ TÀI SẢN", "🤖 PHÒNG LAB DỰ BÁO AI", "💬 TRỢ LÝ AGENT"])
 
     with tab1:
         st.sidebar.subheader("🎒 Tủ đồ Live (Inventory)")
@@ -387,6 +388,74 @@ try:
             items = case_contents.get(selected_case, ["Dữ liệu trống..."])
             for item in items:
                 st.write(f"🔹 {item}")
+
+    # KHU VỰC TAB 4: TRỢ LÝ AGENT (REACT FRAMEWORK)
+    with tab4:
+        st.subheader("💬 Trợ lý Giao dịch AI (ReAct Framework)")
+        st.markdown("Gõ lệnh để Agent tự động truy xuất kho đồ và phân tích thị trường cho sếp.")
+
+        # Khởi tạo bộ nhớ cho Agent (Memory)
+        if "messages" not in st.session_state:
+            st.session_state.messages = [{"role": "assistant", "content": "Chào sếp Quang! Sếp muốn kiểm tra giá hòm nào hay xem báo cáo tổng quan hôm nay?"}]
+
+        # In lại lịch sử trò chuyện
+        for msg in st.session_state.messages:
+            st.chat_message(msg["role"]).write(msg["content"])
+
+        # Ô nhập lệnh
+        if prompt := st.chat_input("Ví dụ: Báo cáo cho tôi tình hình hòm Fracture"):
+            
+            # 1. Lưu và in câu hỏi lên màn hình
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.chat_message("user").write(prompt)
+
+            # 2. Vòng lặp ReAct của Agent (Suy luận & Hành động)
+            with st.chat_message("assistant"):
+                with st.spinner("🧠 Agent đang phân tích kho dữ liệu..."):
+                    time.sleep(1) # Giả lập thời gian AI "đọc" thị trường
+                    
+                    response = ""
+                    prompt_lower = prompt.lower()
+                    
+                    # THOUGHT 1: Nhận diện truy vấn Fracture Case
+                    if "fracture" in prompt_lower:
+                        # ACTION 1: Dùng Tool quét Dataframe
+                        case_data = df[df['case_name'].str.contains("Fracture", case=False)]
+                        if not case_data.empty:
+                            price = case_data.iloc[0]['current_price']
+                            roi = case_data.iloc[0]['roi_percent']
+                            qty = case_data.iloc[0]['quantity']
+                            
+                            # THOUGHT 2: Đưa ra chiến lược
+                            if roi >= 100:
+                                advice = "🚀 Đã x2 tài khoản! Hệ thống khuyến nghị sếp chốt lời ngay 50% số lượng."
+                            elif roi > 0:
+                                advice = "🟢 Đang có lãi nhẹ. Tiếp tục Hold (Giữ) chờ nhịp tăng của thị trường."
+                            else:
+                                advice = "🔴 Đang lỗ hoặc hòa vốn. Sếp cân nhắc bắt đáy thêm để trung bình giá."
+                            
+                            # FINAL ANSWER: Tổng hợp báo cáo
+                            response = f"📦 **Trích xuất dữ liệu Fracture Case:**\n- Số lượng trong kho: **{qty}**\n- Thị giá: **${price:.2f}**\n- Lợi nhuận: **{roi:.2f}%**\n\n🤖 **Phân tích của AI:** {advice}"
+                        else:
+                            response = "⚠️ Không tìm thấy Fracture Case trong DB."
+                    
+                    # THOUGHT 1.1: Nhận diện truy vấn tổng quan
+                    elif "tổng quan" in prompt_lower or "báo cáo" in prompt_lower:
+                        # ACTION: Quét toàn bộ danh mục đầu tư
+                        inventory = df[df['quantity'] > 0]
+                        total_items = inventory['quantity'].sum()
+                        total_invested = (inventory['purchase_price'] * inventory['quantity']).sum()
+                        total_current = (inventory['current_price'] * inventory['quantity']).sum()
+                        net_profit = total_current - total_invested
+                        
+                        response = f"📊 **Báo cáo tài sản tức thời:**\n- Tổng hòm lưu trữ: **{total_items}**\n- Vốn đầu tư: **${total_invested:.2f}**\n- Lãi ròng hiện tại: **${net_profit:.2f}**\n\nDanh mục của sếp đang vận hành rất ổn định!"
+                    
+                    else:
+                        response = "Tớ đang được huấn luyện để hiểu thêm các lệnh phức tạp! Tạm thời sếp hãy hỏi thử về 'hòm fracture' hoặc gõ 'báo cáo tổng quan' nhé."
+
+                    # In câu trả lời và lưu vào bộ nhớ
+                    st.write(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
 
     st.markdown("<hr><p style='text-align: center; color: #8b949e; font-size: 13px; letter-spacing: 1px;'>© 2026 CODED BY DO VAN QUANG</p>", unsafe_allow_html=True)
 
