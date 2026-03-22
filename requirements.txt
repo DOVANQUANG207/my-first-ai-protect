@@ -19,3 +19,4 @@ Pillow>=10.0.0
 
 # Optional: For deployment
 gunicorn>=21.2.0
+google-generativeai
