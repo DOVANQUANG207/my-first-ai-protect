@@ -10,6 +10,7 @@ from sklearn.preprocessing import PolynomialFeatures
 import requests
 import time
 import urllib.parse
+import google.generativeai as genai
 
 st.set_page_config(page_title="CS2 Market AI Terminal", page_icon="⚡", layout="wide")
 st.toast("Hệ thống giao dịch đã khởi động! 🚀", icon="⚡")
@@ -389,73 +390,60 @@ try:
             for item in items:
                 st.write(f"🔹 {item}")
 
-    # KHU VỰC TAB 4: TRỢ LÝ AGENT (REACT FRAMEWORK)
+    # KHU VỰC TAB 4: TRỢ LÝ AGENT (DÙNG GOOGLE GEMINI)
     with tab4:
-        st.subheader("💬 Trợ lý Giao dịch AI (ReAct Framework)")
-        st.markdown("Gõ lệnh để Agent tự động truy xuất kho đồ và phân tích thị trường cho sếp.")
+        st.subheader("💬 Trợ lý Giao dịch AI (Gemini Powered)")
+        st.markdown("Hỏi AI bất kỳ điều gì về thị trường CS2 hoặc nhờ phân tích danh mục đầu tư của sếp.")
 
-        # Khởi tạo bộ nhớ cho Agent (Memory)
+        # Cấu hình API Key từ Streamlit Secrets
+        try:
+            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+            model = genai.GenerativeModel('gemini-1.5-flash')
+        except Exception as e:
+            st.error("⚠️ Lỗi: Chưa tìm thấy GEMINI_API_KEY trong Két sắt (Secrets) của Streamlit!")
+            st.stop()
+
+        # Khởi tạo bộ nhớ UI
         if "messages" not in st.session_state:
-            st.session_state.messages = [{"role": "assistant", "content": "Chào sếp Quang! Sếp muốn kiểm tra giá hòm nào hay xem báo cáo tổng quan hôm nay?"}]
+            st.session_state.messages = [{"role": "assistant", "content": "Chào sếp Quang! Trợ lý AI Gemini đã kết nối. Sếp cần phân tích hòm nào hôm nay?"}]
 
-        # In lại lịch sử trò chuyện
         for msg in st.session_state.messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-        # Ô nhập lệnh
-        if prompt := st.chat_input("Ví dụ: Báo cáo cho tôi tình hình hòm Fracture"):
+        # Nhận lệnh từ người dùng
+        if prompt := st.chat_input("VD: Phân tích giúp tôi hòm Fracture và dự đoán rủi ro..."):
             
-            # 1. Lưu và in câu hỏi lên màn hình
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.chat_message("user").write(prompt)
 
-            # 2. Vòng lặp ReAct của Agent (Suy luận & Hành động)
             with st.chat_message("assistant"):
-                with st.spinner("🧠 Agent đang phân tích kho dữ liệu..."):
-                    time.sleep(1) # Giả lập thời gian AI "đọc" thị trường
-                    
-                    response = ""
-                    prompt_lower = prompt.lower()
-                    
-                    # THOUGHT 1: Nhận diện truy vấn Fracture Case
-                    if "fracture" in prompt_lower:
-                        # ACTION 1: Dùng Tool quét Dataframe
-                        case_data = df[df['case_name'].str.contains("Fracture", case=False)]
-                        if not case_data.empty:
-                            price = case_data.iloc[0]['current_price']
-                            roi = case_data.iloc[0]['roi_percent']
-                            qty = case_data.iloc[0]['quantity']
-                            
-                            # THOUGHT 2: Đưa ra chiến lược
-                            if roi >= 100:
-                                advice = "🚀 Đã x2 tài khoản! Hệ thống khuyến nghị sếp chốt lời ngay 50% số lượng."
-                            elif roi > 0:
-                                advice = "🟢 Đang có lãi nhẹ. Tiếp tục Hold (Giữ) chờ nhịp tăng của thị trường."
-                            else:
-                                advice = "🔴 Đang lỗ hoặc hòa vốn. Sếp cân nhắc bắt đáy thêm để trung bình giá."
-                            
-                            # FINAL ANSWER: Tổng hợp báo cáo
-                            response = f"📦 **Trích xuất dữ liệu Fracture Case:**\n- Số lượng trong kho: **{qty}**\n- Thị giá: **${price:.2f}**\n- Lợi nhuận: **{roi:.2f}%**\n\n🤖 **Phân tích của AI:** {advice}"
-                        else:
-                            response = "⚠️ Không tìm thấy Fracture Case trong DB."
-                    
-                    # THOUGHT 1.1: Nhận diện truy vấn tổng quan
-                    elif "tổng quan" in prompt_lower or "báo cáo" in prompt_lower:
-                        # ACTION: Quét toàn bộ danh mục đầu tư
-                        inventory = df[df['quantity'] > 0]
-                        total_items = inventory['quantity'].sum()
-                        total_invested = (inventory['purchase_price'] * inventory['quantity']).sum()
-                        total_current = (inventory['current_price'] * inventory['quantity']).sum()
-                        net_profit = total_current - total_invested
+                with st.spinner("🧠 Gemini đang phân tích dữ liệu thị trường..."):
+                    try:
+                        # Rút trích dữ liệu kho đồ hiện tại để "mớm" cho AI
+                        inventory_data = df[df['quantity'] > 0][['case_name', 'purchase_price', 'current_price', 'roi_percent', 'quantity']].to_string()
                         
-                        response = f"📊 **Báo cáo tài sản tức thời:**\n- Tổng hòm lưu trữ: **{total_items}**\n- Vốn đầu tư: **${total_invested:.2f}**\n- Lãi ròng hiện tại: **${net_profit:.2f}**\n\nDanh mục của sếp đang vận hành rất ổn định!"
-                    
-                    else:
-                        response = "Tớ đang được huấn luyện để hiểu thêm các lệnh phức tạp! Tạm thời sếp hãy hỏi thử về 'hòm fracture' hoặc gõ 'báo cáo tổng quan' nhé."
+                        # Tạo Prompt Hệ thống (Bơm nhân cách và kiến thức cho AI)
+                        system_prompt = f"""
+                        Bạn là một chuyên gia phân tích dữ liệu và tư vấn tài chính ảo cho thị trường game CS2. 
+                        Người tạo ra bạn là Đỗ Văn Quang (sinh viên KHMT tại ICTU). Bạn đang nói chuyện trực tiếp với Quang.
+                        Dưới đây là dữ liệu kho đồ hiện tại của Quang:
+                        {inventory_data}
+                        
+                        Dựa vào dữ liệu trên và kiến thức của bạn về CS2, hãy trả lời câu hỏi sau của Quang một cách chuyên nghiệp, 
+                        ngắn gọn, dùng emoji sinh động và đưa ra lời khuyên đầu tư cụ thể:
+                        Câu hỏi: {prompt}
+                        """
+                        
+                        # Gọi API để lấy câu trả lời
+                        response = model.generate_content(system_prompt)
+                        ai_reply = response.text
+                        
+                    except Exception as e:
+                        ai_reply = f"⚠️ Lỗi kết nối AI: {e}. Sếp kiểm tra lại Két sắt Secrets nhé!"
 
-                    # In câu trả lời và lưu vào bộ nhớ
-                    st.write(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    # In ra và lưu vào lịch sử
+                    st.write(ai_reply)
+                    st.session_state.messages.append({"role": "assistant", "content": ai_reply})
 
     st.markdown("<hr><p style='text-align: center; color: #8b949e; font-size: 13px; letter-spacing: 1px;'>© 2026 CODED BY DO VAN QUANG</p>", unsafe_allow_html=True)
 
